@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Coaching Intervention Overlay — activity_overlay.xml
+    Displayed as a full-screen Activity when gem balance hits zero.
+
+    Design principles:
+    — Card-based design matching the Kyzen dialog system (bg_dialog_card, 28dp radius)
+    — Soft green background wrapping the white card — same pattern as child dashboard
+    — SDT-aligned: child feels informed and in control, not punished
+    — One screen, one message, one clear action. No clutter.
+    — 🧘 emoji replaces stale system info icon — calm, mindful, on-brand
+
+    Two modes controlled by OverlayActivity.kt (IDs unchanged — Kotlin logic LOCKED):
+        SOFT (first time only): Blue "Give me 15s" + Green "I'm Ready"
+        SINGLE BUTTON (grace used OR hard): Only Green button
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/kyzen_green_bg_light"
+    android:fitsSystemWindows="true"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="40dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Polished white card — matches dialog_detox_confirm style exactly -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_dialog_card"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="28dp">
+
+        <!-- Icon — 🧘 calm/mindful, replaces stale system info icon -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🧘"
+            android:textSize="48sp"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:includeFontPadding="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/txtOverlayTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Time for a Mindful Break"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_green_dark"
+            android:gravity="center"
+            android:letterSpacing="0.01"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Status pill — dynamic text + background set by UsageMonitorService -->
+        <!-- Shows: "0 💎 gems — wallet empty" / "Daily allowance reached" / "Entertainment paused" -->
+        <TextView
+            android:id="@+id/txtOverlayStatusPill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 gems — wallet empty"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_red_medium"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:background="@drawable/bg_intervention_pill"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Body message — personalised by UsageMonitorService -->
+        <TextView
+            android:id="@+id/txtOverlayMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your gems are all spent. Switch to a productive app for 2 minutes to earn 1 gem, or start a detox break to earn 10."
+            android:textSize="14sp"
+            android:lineSpacingExtra="5dp"
+            android:textColor="@color/kyzen_grey_dark"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Hard mode countdown pill — hidden by default, shown in hard mode -->
+        <TextView
+            android:id="@+id/txtOverlayCountdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_amber_dark"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@drawable/bg_cancel_pill"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/kyzen_grey_divider"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Quote block — fixed height container so buttons NEVER shift position.
+             Quotes fade in/out via alpha animation — layout stays completely stable. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:id="@+id/txtOverlayQuote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="13sp"
+                android:textStyle="italic"
+                android:textColor="@color/kyzen_grey_dark"
+                android:gravity="center"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:lineSpacingExtra="4dp"
+                android:alpha="0"
+                android:layout_marginBottom="5dp" />
+
+            <TextView
+                android:id="@+id/txtOverlayQuoteAuthor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"
+                android:textColor="@color/kyzen_grey_light"
+                android:gravity="center"
+                android:alpha="0" />
+
+        </LinearLayout>
+
+        <!-- Soft mode only: blue "Give me 15s" button — hidden after grace is used -->
+        <Button
+            android:id="@+id/btnGoBackToApp"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Give me 15 seconds to wrap up"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_rounded"
+            android:backgroundTint="@color/kyzen_blue_dark"
+            android:stateListAnimator="@null"
+            android:letterSpacing="0.02"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Always visible: sends child home -->
+        <Button
+            android:id="@+id/btnReturnHome"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="I'm Ready — Take a Break"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_rounded"
+            android:backgroundTint="@color/kyzen_green_medium"
+            android:stateListAnimator="@null"
+            android:letterSpacing="0.02"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

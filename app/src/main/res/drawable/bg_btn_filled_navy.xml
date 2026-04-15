@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_btn_filled_navy.xml — Selected state for Daily Cap buttons.
+    Solid navy fill, navy border, 12dp corners.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="@color/kyzen_navy" />
+    <stroke android:width="1.5dp" android:color="@color/kyzen_navy" />
+</shape>

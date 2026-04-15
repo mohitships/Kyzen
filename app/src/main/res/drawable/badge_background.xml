@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    badge_background.xml — Full pill background for AI category badges.
+    The solid colour below is a fallback only.
+    The actual tint is always applied at runtime by AppUsageAdapter via
+    DrawableCompat.setTint() — so the solid colour here does not matter visually.
+    Three-category tint colours applied in code:
+    PRODUCTIVE    → @color/kyzen_green_medium  (#2E7D32)
+    ENTERTAINMENT → @color/kyzen_red_dark      (#B71C1C)
+    NEUTRAL       → @color/kyzen_grey_medium   (#757575)
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="100dp" />
+    <solid android:color="@color/kyzen_grey_light" />
+</shape>

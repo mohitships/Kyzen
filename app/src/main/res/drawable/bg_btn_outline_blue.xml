@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_btn_outline_blue.xml
+    Button shape with a blue border and transparent fill.
+    Used for Detox Duration unselected state — tinted to solid blue when selected.
+    Corner radius matches KyzenCardAction (20dp) for visual consistency.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <corners android:radius="12dp" />
+
+    <stroke
+        android:width="1.5dp"
+        android:color="@color/kyzen_blue_dark" />
+
+    <solid android:color="@android:color/transparent" />
+
+</shape>

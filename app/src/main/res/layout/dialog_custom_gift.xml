@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dialog_custom_gift.xml — Custom gem gift dialog
+    Shown when parent taps "Custom 💎" in the Gift Gems card.
+    Styled to match the Kyzen dialog system (bg_dialog_card, 28dp radius).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_card"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="28dp"
+    android:paddingBottom="24dp">
+
+    <!-- Icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💎"
+        android:textSize="36sp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gift Gems"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/kyzen_green_dark"
+        android:gravity="center"
+        android:letterSpacing="0.01"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add gems directly to your child's wallet."
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_medium"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Input field -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Amount (max 200)"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="24dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etGiftAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:maxLines="1"
+            android:textSize="16sp"
+            android:textColor="@color/kyzen_grey_dark" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Buttons row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnGiftCancel"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_grey_dark"
+            android:background="@drawable/bg_btn_outline_navy"
+            android:backgroundTint="@null"
+            android:stateListAnimator="@null"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:layout_marginEnd="10dp" />
+
+        <Button
+            android:id="@+id/btnGiftConfirm"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Add"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_filled_green"
+            android:backgroundTint="@null"
+            android:stateListAnimator="@null"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Background for the gem wallet number card in fragment_dashboard.xml.
+     20dp corners match KyzenCardAction. 2dp stroke gives a visible but refined border.
+     Solid color is overridden at runtime by applyGemColour() via setBackgroundColor()
+     — note: setBackgroundColor() replaces the entire drawable so the stroke won't
+     persist after the first color change. The initial green is only the default state. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="20dp" />
+    <solid android:color="@color/kyzen_green_medium" />
+    <stroke
+        android:width="2dp"
+        android:color="@color/kyzen_green_dark" />
+</shape>

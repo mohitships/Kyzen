@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Phase 2: Core special permissions -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Phase 3: Background service and automation permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Kyzen">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".OverlayActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+
+        <!-- Detox Break Screen — full-screen countdown, locks phone during voluntary break -->
+        <!-- singleTask prevents stacking; showWhenLocked + turnScreenOn ensure visibility -->
+        <!-- even if the device screen was off when the detox started -->
+        <activity
+            android:name=".DetoxBreakActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+
+        <!-- Phase 3: Mode Selection — shown on every launch after permissions granted -->
+        <activity
+            android:name=".ModeSelectionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Phase 3: PIN Entry — parent authentication screen -->
+        <activity
+            android:name=".PinEntryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+
+        <!-- Phase 3: Child Dashboard — child-facing wellbeing view -->
+        <activity
+            android:name=".ChildDashboardActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Phase 3: Parent Dashboard — admin control centre (PIN-protected) -->
+        <activity
+            android:name=".ParentDashboardActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Phase 3: Background monitoring service -->
+        <service
+            android:name=".UsageMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Phase 3: Boot + Screen-On auto-restart receiver -->
+        <!-- exported="true" is REQUIRED for BOOT_COMPLETED — sent by the OS (external to our app) -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.SCREEN_ON" />
+                <!-- USER_PRESENT fires after lock screen dismissal — more reliable than
+                     SCREEN_ON alone on OxygenOS where the service may be killed overnight -->
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

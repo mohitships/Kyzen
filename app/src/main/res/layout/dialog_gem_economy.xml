@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dialog_gem_economy.xml — "How Gems Work" dialog
+    Shown when child taps "How it works" on the Gems Wallet card.
+    Styled to match the Kyzen dialog system (bg_dialog_card, 28dp radius).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_card"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="28dp"
+    android:paddingBottom="24dp"
+    android:layout_margin="24dp">
+
+    <!-- Header icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💎"
+        android:textSize="36sp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="How Gems Work"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:gravity="center"
+        android:letterSpacing="0.01"
+        android:layout_marginBottom="20dp" />
+
+    <!-- EARNING section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EARNING"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="@color/kyzen_green_medium"
+        android:letterSpacing="0.10"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtEarnRate1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2 mins on a productive app  →  +1 gem"
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/txtEarnRate2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="10-mins screen break  →  +10 gems"
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/kyzen_grey_divider"
+        android:layout_marginBottom="16dp" />
+
+    <!-- SPENDING section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SPENDING"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="@color/kyzen_red_medium"
+        android:letterSpacing="0.10"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtSpendRate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1 gem = 1 minute of entertainment"
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="When your wallet hits 0, entertainment stops."
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/kyzen_grey_divider"
+        android:layout_marginBottom="16dp" />
+
+    <!-- DAILY LIMIT section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DAILY LIMIT"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="@color/kyzen_amber_dark"
+        android:letterSpacing="0.10"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtDailyCap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Daily limit: 30 gems. Unused gems carry forward."
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Close button -->
+    <Button
+        android:id="@+id/btnGemEconomyClose"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Got it"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:textColor="@color/kyzen_white"
+        android:backgroundTint="@color/kyzen_green_medium"
+        android:stateListAnimator="@null"
+        android:letterSpacing="0.04"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    DetoxBreakActivity Layout — Voluntary Detox Break Screen
+    Light mode — warm amber/yellow background. Human eyes love warm yellow.
+    Charming, calm, on-brand with Kyzen light theme.
+    All IDs preserved — DetoxBreakActivity.kt logic LOCKED.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/kyzen_amber_bg"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="48dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🧘"
+        android:textSize="64sp"
+        android:textColor="#FF000000"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Screen Break Active"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_amber_dark"
+        android:gravity="center"
+        android:letterSpacing="0.01"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Put the phone face-down and breathe."
+        android:textSize="13sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="36dp" />
+
+    <!-- Giant countdown timer -->
+    <TextView
+        android:id="@+id/txtDetoxCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="10:00"
+        android:textSize="80sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:fontFamily="monospace"
+        android:includeFontPadding="false"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Progress label -->
+    <TextView
+        android:id="@+id/txtDetoxProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 of 10 minutes completed"
+        android:textSize="12sp"
+        android:textColor="@color/kyzen_grey_medium"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Horizontal progress bar -->
+    <ProgressBar
+        android:id="@+id/progressDetox"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="@color/kyzen_green_dark"
+        android:progressBackgroundTint="@color/kyzen_grey_divider"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Motivational quote — fixed height container, no layout shift -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:id="@+id/txtDetoxQuote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:textColor="@color/kyzen_grey_dark"
+            android:gravity="center"
+            android:textStyle="italic"
+            android:lineSpacingExtra="4dp"
+            android:maxLines="3"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/txtDetoxQuoteAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="11sp"
+            android:textColor="@color/kyzen_grey_medium"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+    <!-- Screen off hint -->
+    <TextView
+        android:id="@+id/txtDetoxCancelHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Screen can turn off — the timer keeps running."
+        android:textSize="11sp"
+        android:textColor="@color/kyzen_grey_light"
+        android:gravity="center"
+        android:layout_marginBottom="28dp" />
+
+    <!--
+        Emergency Cancel — de-emphasised on light background.
+        Amber outline style — visible but not tempting.
+        No emoji in button text. IDs preserved.
+    -->
+    <Button
+        android:id="@+id/btnDetoxCancel"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:text="End Break Early"
+        android:textSize="12sp"
+        android:textColor="@color/kyzen_white"
+        android:textAllCaps="false"
+        android:letterSpacing="0.03"
+        android:backgroundTint="@color/kyzen_grey_medium"
+        android:stateListAnimator="@null"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp" />
+
+</LinearLayout>

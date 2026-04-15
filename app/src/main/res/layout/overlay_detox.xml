@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    overlay_detox.xml — Detox Enforcement Overlay (drawn by UsageMonitorService)
+    Inflated into WindowManager.TYPE_APPLICATION_OVERLAY when child tries to
+    open another app during an active detox break.
+
+    Design: identical to activity_overlay.xml — white bg_dialog_card on
+    kyzen_green_bg_light. Feels like the same screen reappearing.
+    All IDs preserved — UsageMonitorService.kt logic LOCKED.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/kyzen_green_bg_light"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="40dp">
+
+    <!-- White card — identical to activity_overlay.xml card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_dialog_card"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="28dp">
+
+        <!-- Icon -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🧘"
+            android:textSize="48sp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Screen Break Active"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_green_dark"
+            android:gravity="center"
+            android:letterSpacing="0.01"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Status pill — amber, shows break is in progress -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Break in progress"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_amber_dark"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:background="@drawable/bg_cancel_pill"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Countdown -->
+        <TextView
+            android:id="@+id/txtOverlayDetoxCountdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="--:--"
+            android:textSize="64sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_green_dark"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:layout_marginBottom="4dp" />
+
+        <!-- "remaining" label -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="remaining"
+            android:textSize="12sp"
+            android:textColor="@color/kyzen_grey_light"
+            android:gravity="center"
+            android:letterSpacing="0.08"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/kyzen_grey_divider"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Fixed-height quote container — buttons never shift -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/txtDetoxQuote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="13sp"
+                android:textStyle="italic"
+                android:textColor="@color/kyzen_grey_dark"
+                android:gravity="center"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:lineSpacingExtra="4dp"
+                android:alpha="0"
+                android:layout_marginBottom="5dp" />
+
+            <TextView
+                android:id="@+id/txtDetoxQuoteAuthor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"
+                android:textColor="@color/kyzen_grey_light"
+                android:gravity="center"
+                android:alpha="0" />
+
+        </LinearLayout>
+
+        <!-- Cancel button — same style as intervention overlay buttons -->
+        <Button
+            android:id="@+id/btnOverlayDetoxCancel"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="End Break Early"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_rounded"
+            android:backgroundTint="@color/kyzen_grey_medium"
+            android:stateListAnimator="@null"
+            android:letterSpacing="0.02"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

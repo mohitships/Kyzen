@@ -1,0 +1,13 @@
+# Documentation
+*.md
+!README.md
+
+# Android
+app/build/
+.gradle/
+.idea/
+local.properties
+*.jks
+*.apk
+*.aab
+.DS_Store

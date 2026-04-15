@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_parent_dashboard.xml — ViewPager2 host (Session 11 Redesign)
+    ────────────────────────────────────────────────────────────────────────
+    Two swipeable pages:
+      Page 0 — fragment_parent_settings.xml  (Summary stats + Controls)
+      Page 1 — fragment_parent_usage.xml     (Today's app usage list)
+
+    Date header sits above the ViewPager2 — visible on both pages.
+    Two dot indicators at the bottom reflect the current page.
+    Background: kyzen_yellow_bg — consistent with ModeSelection + PinEntry.
+
+    All IDs preserved from original layout for Kotlin compatibility:
+      txtParentDate — bound in ParentDashboardActivity.onCreate()
+      viewPagerParent, dot0parent, dot1parent — bound in Activity
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/kyzen_yellow_bg">
+
+    <!-- ── ViewPager2 — fills all space above the dot bar ───────────── -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerParent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dotIndicatorBarParent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ── Dot indicator bar — two dots centred at the bottom ────────── -->
+    <LinearLayout
+        android:id="@+id/dotIndicatorBarParent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Dot 0 — Settings (active by default) -->
+        <View
+            android:id="@+id/dot0parent"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/bg_dot_active"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Dot 1 — App Usage -->
+        <View
+            android:id="@+id/dot1parent"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/bg_dot_inactive" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

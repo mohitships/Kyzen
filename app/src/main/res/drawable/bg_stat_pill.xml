@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rounded rectangle background for the stat pills in the child dashboard.
+     Used by the Productive and Play mini-stat blocks in the wallet card.
+     Solid colour is overridden per-instance via android:background tinting. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="@color/kyzen_green_medium" />
+</shape>

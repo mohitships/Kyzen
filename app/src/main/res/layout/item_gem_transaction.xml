@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_gem_transaction.xml — Single gem transaction row.
+
+    Layout:
+    [ colour bar | 💎 icon | label (line1) + time (line2) | +1 / -1 (right) ]
+
+    Design principles:
+    - Left colour bar = instant credit/debit scan (no need to read amount)
+    - 💎 emoji small and fixed = visual anchor, not the focus
+    - Two-line centre = label + time, breathing room, no crowding
+    - Amount right-aligned, large + "gem" below it = reads like a price tag
+    - Airy padding = premium, not cramped
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:paddingEnd="20dp"
+    android:background="@color/kyzen_white">
+
+    <!-- Left colour bar — 3dp wide, full row height, colour-coded -->
+    <View
+        android:id="@+id/viewTxColorBar"
+        android:layout_width="3dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="14dp"
+        android:background="@color/kyzen_green_dark" />
+
+    <!-- Gem emoji — small, fixed, visual anchor -->
+    <TextView
+        android:id="@+id/txtTxEmoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💎"
+        android:textSize="15sp"
+        android:textColor="#FF000000"
+        android:includeFontPadding="false"
+        android:layout_marginEnd="10dp" />
+
+    <!-- Centre: label + time (two lines, takes all remaining space) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txtTxLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_grey_dark"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/txtTxTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="@color/kyzen_grey_light"
+            android:layout_marginTop="2dp"
+            android:includeFontPadding="false" />
+
+    </LinearLayout>
+
+    <!-- Right: amount + "gem" label stacked vertically -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/txtTxAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="gem"
+            android:textSize="9sp"
+            android:textColor="@color/kyzen_grey_light"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="1dp"
+            android:includeFontPadding="false" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small solid circle dot — category indicator in app usage list rows.
+     Tinted at runtime by AppUsageAdapter via DrawableCompat.setTint().
+     Green = productive, Red = entertainment, Grey = neutral. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/kyzen_grey_light" />
+</shape>

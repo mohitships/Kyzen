@@ -1,0 +1,67 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ── Base application theme ──────────────────────────────────────────── -->
+    <style name="Base.Theme.Kyzen" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Splash / launch window background: warm yellow matches Mode Selection -->
+        <item name="android:windowBackground">@color/kyzen_yellow_bg</item>
+        <!-- Status bar: match the app's light green surface -->
+        <item name="android:statusBarColor">@color/kyzen_green_bg_light</item>
+        <!-- Force dark icons on the light status bar so they are readable -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="Theme.Kyzen" parent="Base.Theme.Kyzen" />
+
+    <!-- ── Kyzen Typography Scale ───────────────────────────────────────────── -->
+    <!--
+        NOTE: Dot-notation (e.g. Kyzen.Text.Hero) requires a parent style named
+        "Kyzen.Text" to exist — AAPT enforces this. We use underscores instead,
+        which are self-contained and do not imply a parent hierarchy.
+    -->
+
+    <!-- Hero: large balance / countdown numbers -->
+    <style name="KyzenTextHero">
+        <item name="android:textSize">42sp</item>
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textColor">@color/kyzen_green_dark</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- Title: section headings, card titles -->
+    <style name="KyzenTextTitle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textColor">@color/kyzen_grey_dark</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- Body: descriptive text, labels, hints -->
+    <style name="KyzenTextBody">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textColor">@color/kyzen_grey_medium</item>
+    </style>
+
+    <!-- ── Kyzen Card Styles ─────────────────────────────────────────────────── -->
+
+    <!-- Hero Card: main wallet / prominent content cards
+         strokeColor deepened from kyzen_green_bg to kyzen_green_light so the
+         border is actually visible against the white card surface. -->
+    <style name="KyzenCardHero" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">28dp</item>
+        <item name="cardBackgroundColor">@color/kyzen_white</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/kyzen_green_light</item>
+    </style>
+
+    <!-- Action Card: smaller action tiles in grids
+         strokeWidth="1dp" added — colour is set per-card in the layout
+         so each card gets a border that matches its own colour theme. -->
+    <style name="KyzenCardAction" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+</resources>

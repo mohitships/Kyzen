@@ -1,0 +1,863 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    fragment_parent_settings.xml — Page 0 (index 0) of ParentDashboardActivity ViewPager2
+    ──────────────────────────────────────────────────────────────────────────────────────
+    Contains: Today's summary hero card + all parent controls (5 action cards).
+    Background: kyzen_yellow_bg — consistent with activity and usage fragment.
+    paddingBottom="88dp" — clears the dot indicator bar at the bottom.
+
+    ID inventory (all bound in ParentSettingsFragment.onViewCreated()):
+      txtParentProductiveTime, txtParentEntertainmentTime, txtParentGemWallet
+      switchPauseEntertainment
+      btnCap30, btnCap60, btnCap90, btnCap120
+      btnGift10, btnGift20, btnGift50, btnGiftCustom
+      btnDeduct5, btnDeduct10, btnDeduct20, btnDeductCustom
+      btnDetoxDuration5, btnDetoxDuration10, btnDetoxDuration15, btnDetoxDuration20
+-->
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/kyzen_yellow_bg"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:paddingBottom="88dp"
+        android:clipToPadding="false">
+
+        <!-- ── HEADER — Title + Date (scrolls with content) ────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PARENT DASHBOARD"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:textAllCaps="false"
+                android:letterSpacing="0.08"
+                android:textColor="@color/kyzen_purple_dark" />
+
+            <TextView
+                android:id="@+id/txtParentDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/kyzen_purple_dark"
+                android:alpha="0.55"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- ── TODAY'S SUMMARY — Hero Card ───────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardHero"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Section label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TODAY"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_purple_dark"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- ── Row 1: FOCUS + FUN — tall pills, match child dashboard ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="110dp"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:layout_marginBottom="10dp">
+
+                    <!-- FOCUS pill — green -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_stat_pill"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:layout_marginEnd="6dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="FOCUS"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.65"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="2dp" />
+
+                        <TextView
+                            android:id="@+id/txtParentProductiveTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="30sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/kyzen_white"
+                            android:includeFontPadding="false"
+                            android:lineSpacingExtra="0dp"
+                            android:maxLines="1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="MIN"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.55"
+                            android:letterSpacing="0.12"
+                            android:layout_marginTop="1dp" />
+
+                    </LinearLayout>
+
+                    <!-- FUN pill — red -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_stat_pill_red"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="FUN"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.65"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="2dp" />
+
+                        <TextView
+                            android:id="@+id/txtParentEntertainmentTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="30sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/kyzen_white"
+                            android:includeFontPadding="false"
+                            android:lineSpacingExtra="0dp"
+                            android:maxLines="1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="MIN"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.55"
+                            android:letterSpacing="0.12"
+                            android:layout_marginTop="1dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- ── Row 2: GEMS WALLET — full width purple card ───────── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_stat_pill_purple"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:gravity="center_vertical">
+
+                    <!-- Left: label + description -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="GEM WALLET"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.65"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="2dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Current balance"
+                            android:textSize="11sp"
+                            android:textColor="@color/kyzen_white"
+                            android:alpha="0.55" />
+
+                    </LinearLayout>
+
+                    <!-- Right: big number + gem emoji -->
+                    <TextView
+                        android:id="@+id/txtParentGemWallet"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textSize="36sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/kyzen_white"
+                        android:includeFontPadding="false"
+                        android:maxLines="1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" 💎"
+                        android:textSize="22sp"
+                        android:layout_marginStart="4dp"
+                        android:includeFontPadding="false" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── CONTROLS — Pause Entertainment ────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_grey_light">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CONTROLS"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_grey_dark"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Title + switch on same row — switch anchored to the right -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Left: title + description -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingEnd="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pause All Entertainment"
+                            style="@style/KyzenTextTitle"
+                            android:textSize="13sp"
+                            android:textColor="@color/kyzen_grey_dark"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Instantly blocks all entertainment apps regardless of gem balance"
+                            android:textSize="12sp"
+                            android:textColor="@color/kyzen_grey_medium" />
+
+                    </LinearLayout>
+
+                    <!-- Right: toggle -->
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchPauseEntertainment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── DAILY CAP ───────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_navy">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DAILY CAP"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_navy"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Max 💎 gems child can spend on entertainment per day. Unused gems carry forward."
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_dark"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnCap30"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="30\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnCap60"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="60\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnCap90"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="90\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnCap120"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="120\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── GIFT GEMS ───────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_green_medium">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GIFT GEMS"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_green_medium"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Celebrate your child's effort by adding gems directly to their wallet."
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_medium"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnGift10"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="+10\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_green"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnGift20"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="+20\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_green"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnGift50"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="+50\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_green"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnGiftCustom"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="Custom\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_blue"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── ADJUST GEM BALANCE ──────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_red_medium">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ADJUST BALANCE"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_red_medium"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Remove gems from your child's wallet to help reset expectations and encourage a fresh start."
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_medium"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnDeduct5"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="-5\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_red"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnDeduct10"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="-10\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_red"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnDeduct20"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="-20\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_red"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnDeductCustom"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="Custom\n💎"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:textColor="@color/kyzen_white"
+                        android:background="@drawable/bg_btn_filled_purple"
+                        android:backgroundTint="@null"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── DETOX DURATION ─────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_blue_dark">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DETOX DURATION"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_blue_dark"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="How long the child's voluntary screen break lasts. Earns 10 💎 gems on completion."
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_dark"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnDetoxDuration5"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="5 mins\n⏱"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnDetoxDuration10"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="10 mins\n⏱"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnDetoxDuration15"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="15 mins\n⏱"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/btnDetoxDuration20"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:text="20 mins\n⏱"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:stateListAnimator="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── CHANGE PIN ─────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/kyzen_white"
+            app:strokeColor="@color/kyzen_purple_dark">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PARENT LOCK"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_purple_dark"
+                    android:letterSpacing="0.12"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Update your 4-digit parent PIN. You will need to enter your current PIN to set a new one."
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_medium"
+                    android:layout_marginBottom="14dp" />
+
+                <Button
+                    android:id="@+id/btnChangePIN"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Change PIN"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0.04"
+                    android:textColor="@color/kyzen_white"
+                    android:background="@drawable/bg_btn_filled_navy"
+                    android:backgroundTint="@null"
+                    android:stateListAnimator="@null"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

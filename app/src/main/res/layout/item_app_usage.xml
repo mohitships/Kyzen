@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_app_usage.xml — RecyclerView row (Redesigned Session 5 — inline time)
+    ───────────────────────────────────────────────────────────────────────────
+    ALL IDs preserved exactly as bound in AppUsageAdapter.kt ViewHolder:
+      imgAppIcon, txtAppName, txtUsageTime, txtCategoryBadge, txtConfidence
+
+    CRITICAL NOTES:
+    1. txtCategoryBadge MUST be a TextView — AppUsageAdapter uses DrawableCompat.setTint().
+       Now visibility=gone — no badge shown. Tint logic preserved for safety.
+    2. txtConfidence MUST remain in layout tree (visibility=gone) — crash prevention.
+    3. txtUsageTime — right-aligned, large, colour-coded by category in Kotlin.
+    4. Single row layout — icon | app name | time used (right)
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/kyzen_white"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/kyzen_grey_divider"
+    android:layout_marginBottom="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="16dp">
+
+        <!-- ── App icon — raw, no border ─────────────────────────────── -->
+        <ImageView
+            android:id="@+id/imgAppIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:scaleType="centerInside"
+            android:contentDescription="App icon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- ── Usage time — right side, large, category-coloured ──────── -->
+        <TextView
+            android:id="@+id/txtUsageTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0m"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_grey_light"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- ── App name — between icon and time ──────────────────────── -->
+        <TextView
+            android:id="@+id/txtAppName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="App Name"
+            style="@style/KyzenTextTitle"
+            android:textSize="15sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintStart_toEndOf="@id/imgAppIcon"
+            app:layout_constraintEnd_toStartOf="@id/txtUsageTime"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="12dp" />
+
+        <!-- ── Category badge — hidden, kept for adapter tint logic ───── -->
+        <TextView
+            android:id="@+id/txtCategoryBadge"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:text=""
+            android:background="@drawable/bg_category_dot"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- ── Confidence score — hidden, kept for crash prevention ───── -->
+        <TextView
+            android:id="@+id/txtConfidence"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="0%"
+            android:textSize="10sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

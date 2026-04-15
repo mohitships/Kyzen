@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dialog_detox_complete.xml — Celebration dialog shown on detox break completion
+    ───────────────────────────────────────────────────────────────────────────────
+    SDT competence: celebrate what the child DID, not just the reward.
+    Kaizen: frame completion as proof of growing self-regulation ability.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_card"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp"
+    android:layout_margin="24dp">
+
+    <!-- Celebration icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🌟"
+        android:textSize="48sp"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:includeFontPadding="false"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Break Complete!"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:gravity="center"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Well done 🌱"
+        android:textSize="15sp"
+        android:textColor="@color/kyzen_green_medium"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Gems awarded pill — dynamic, injected by Kotlin -->
+    <TextView
+        android:id="@+id/txtCompleteGems"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+10 💎 Gems added to your wallet!"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:background="@drawable/bg_achievement_pill"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Body message — dynamic, injected by Kotlin -->
+    <TextView
+        android:id="@+id/txtCompleteBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="You stayed present and proved to yourself that you can choose to pause. That skill grows every time you use it."
+        android:textSize="14sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="28dp" />
+
+    <!-- Collect gems — primary action -->
+    <Button
+        android:id="@+id/btnCompleteCollect"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="Collect Gems 💎"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:textColor="@color/kyzen_white"
+        android:backgroundTint="@color/kyzen_green_dark"
+        android:stateListAnimator="@null"
+        android:letterSpacing="0.02" />
+
+</LinearLayout>

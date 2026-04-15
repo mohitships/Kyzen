@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- ── Kyzen Brand Palette ─────────────────────────────────────────────── -->
+    <!-- Productive greens -->
+    <color name="kyzen_green_dark">#1B5E20</color>
+    <color name="kyzen_green_medium">#2E7D32</color>
+    <color name="kyzen_green_light">#388E3C</color>
+    <color name="kyzen_green_bg">#E8F5E9</color>
+    <color name="kyzen_green_bg_light">#F1F8E9</color>
+
+    <!-- Entertainment reds -->
+    <color name="kyzen_red_dark">#B71C1C</color>
+    <color name="kyzen_red_medium">#C62828</color>
+
+    <!-- Parent blue/purple -->
+    <color name="kyzen_blue_dark">#1565C0</color>
+    <color name="kyzen_purple_dark">#4A148C</color>
+    <color name="kyzen_purple_medium">#7B1FA2</color>
+    <color name="kyzen_purple_bg">#F3E5F5</color>
+    <color name="kyzen_navy">#1A237E</color>
+
+    <!-- Detox blue -->
+    <color name="kyzen_blue_bg">#E3F2FD</color>
+
+    <!-- Earn gems amber -->
+    <color name="kyzen_amber_bg">#FFF8E1</color>
+    <color name="kyzen_amber_dark">#E65100</color>
+    <color name="kyzen_amber_medium">#BF360C</color>
+    <color name="kyzen_brown">#5D4037</color>
+
+    <!-- Neutrals -->
+    <color name="kyzen_grey_dark">#212121</color>
+    <color name="kyzen_grey_medium">#757575</color>
+    <color name="kyzen_grey_light">#9E9E9E</color>
+    <color name="kyzen_grey_divider">#E0E0E0</color>
+    <color name="kyzen_white">#FFFFFF</color>
+
+    <!-- Mood-lifting warm yellow — used on Mode Selection and PIN Entry screens -->
+    <color name="kyzen_yellow_bg">#FFFDE7</color>
+
+    <!-- Preview button green -->
+    <color name="kyzen_green_preview">#4CAF50</color>
+
+    <!-- Detox break screen — dark blue night palette -->
+    <color name="kyzen_detox_bg">#0D1B4B</color>
+    <color name="kyzen_detox_text_muted">#7B93D4</color>
+    <color name="kyzen_detox_text_dim">#4A6099</color>
+    <color name="kyzen_detox_progress_bg">#1E2F6B</color>
+
+    <!-- Overlay / coaching screen -->
+    <color name="kyzen_overlay_bg">#E8F5E9</color>
+</resources>

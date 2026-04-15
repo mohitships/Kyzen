@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_btn_rounded.xml — Reusable rounded button shape for overlay buttons.
+    12dp corners — matches the pill button system in ParentSettingsFragment.
+    backgroundTint is applied on top of this shape to set the actual colour.
+    Used by: activity_overlay.xml, overlay_detox.xml buttons.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="#FFFFFF" />
+</shape>

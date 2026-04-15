@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dialog_detox_confirm.xml — Custom Detox Break confirmation dialog
+    ──────────────────────────────────────────────────────────────────
+    Themed to match the Kyzen blue card design system.
+    Transparent window background set in Kotlin (ColorDrawable TRANSPARENT).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_card"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp"
+    android:layout_margin="24dp">
+
+    <!-- Icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🌿"
+        android:textSize="40sp"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:includeFontPadding="false"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ready for a mindful break?"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_navy"
+        android:gravity="center"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Duration + reward pill -->
+    <TextView
+        android:id="@+id/txtDialogDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="20 mins detox · +10 💎 gems"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_blue_dark"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="@drawable/bg_dialog_pill"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Body message -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Step away, breathe, and let your mind reset.\n\nYou chose this — and that choice itself is growth. 🌱"
+        android:textSize="14sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="28dp" />
+
+    <!-- Confirm button -->
+    <Button
+        android:id="@+id/btnDialogConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="I'm ready — let's go"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:textColor="@color/kyzen_white"
+        android:backgroundTint="@color/kyzen_blue_dark"
+        android:stateListAnimator="@null"
+        android:letterSpacing="0.02"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Cancel button — ghost style -->
+    <Button
+        android:id="@+id/btnDialogCancel"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Maybe later"
+        android:textSize="13sp"
+        android:textAllCaps="false"
+        android:textColor="@color/kyzen_grey_medium"
+        android:backgroundTint="@android:color/transparent"
+        android:stateListAnimator="@null"
+        android:letterSpacing="0.02" />
+
+</LinearLayout>

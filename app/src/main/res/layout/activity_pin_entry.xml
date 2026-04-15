@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_pin_entry.xml — Parent PIN Authentication Screen
+    ──────────────────────────────────────────────────────────
+    Two flows:
+      1. First time — "Create your PIN" (enter + confirm)
+      2. Returning  — "Enter your PIN"  (verify)
+
+    Background: kyzen_yellow_bg — consistent with ModeSelection + ParentDashboard.
+    Custom number pad — prevents PIN appearing in keyboard suggestions.
+
+    IDs bound in PinEntryActivity:
+      txtPinTitle, txtPinSubtitle, txtPinError
+      dot1, dot2, dot3, dot4
+      btn0–btn9, btnClear, btnConfirm, btnBackToModes
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp"
+    android:background="@color/kyzen_yellow_bg">
+
+    <!-- Lock icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔒"
+        android:textSize="48sp"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/txtPinTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Parent Mode"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/kyzen_blue_dark"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/txtPinSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter PIN"
+        android:textSize="14sp"
+        android:textColor="@color/kyzen_grey_medium"
+        android:layout_marginBottom="28dp" />
+
+    <!-- PIN dot indicators -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/dot1"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:text="○"
+            android:textSize="36sp"
+            android:textColor="@color/kyzen_blue_dark"
+            android:gravity="center"
+            android:layout_marginEnd="20dp"/>
+
+        <TextView
+            android:id="@+id/dot2"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:text="○"
+            android:textSize="36sp"
+            android:textColor="@color/kyzen_blue_dark"
+            android:gravity="center"
+            android:layout_marginEnd="20dp"/>
+
+        <TextView
+            android:id="@+id/dot3"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:text="○"
+            android:textSize="36sp"
+            android:textColor="@color/kyzen_blue_dark"
+            android:gravity="center"
+            android:layout_marginEnd="20dp"/>
+
+        <TextView
+            android:id="@+id/dot4"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:text="○"
+            android:textSize="36sp"
+            android:textColor="@color/kyzen_blue_dark"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- Error + Forgot PIN — fixed combined height to prevent layout shift -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/txtPinError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:textColor="@color/kyzen_red_dark"
+            android:gravity="center" />
+
+        <!-- Forgot PIN? — hidden by default, shown after 3 wrong attempts -->
+        <TextView
+            android:id="@+id/txtForgotPin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Forgot PIN?"
+            android:textSize="13sp"
+            android:textColor="@color/kyzen_blue_dark"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Number pad -->
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="4"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp">
+
+        <!-- Row 1: 1 2 3 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn1"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="1"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn2"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="2"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn3"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="3"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <!-- Row 2: 4 5 6 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn4"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="4"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn5"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="5"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn6"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="6"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <!-- Row 3: 7 8 9 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn7"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="7"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn8"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="8"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn9"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="9"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <!-- Row 4: ⌫  0  ✓ -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClear"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="⌫"
+            android:textSize="26sp"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn0"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="0"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_margin="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirm"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_columnWeight="1"
+            android:layout_height="64dp"
+            android:text="✓"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/kyzen_navy"
+            android:layout_margin="4dp"/>
+
+    </GridLayout>
+
+
+</LinearLayout>

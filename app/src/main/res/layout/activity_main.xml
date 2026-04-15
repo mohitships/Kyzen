@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutSetup"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingStart="36dp"
+    android:paddingEnd="36dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:fitsSystemWindows="true">
+
+    <!-- App Logo -->
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="Kyzen Logo"
+        android:layout_marginBottom="16dp" />
+
+    <!-- App Name -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Kyzen"
+        android:textAlignment="center"
+        android:textSize="34sp"
+        android:letterSpacing="0.08"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Tagline -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Digital Wellbeing Coach"
+        android:textAlignment="center"
+        android:textSize="13sp"
+        android:letterSpacing="0.06"
+        android:textColor="@color/kyzen_grey_medium"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Divider line -->
+    <View
+        android:layout_width="48dp"
+        android:layout_height="2dp"
+        android:background="@color/kyzen_green_light"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Permission description -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Two permissions are required to monitor screen time and display coaching prompts. All data stays on your device."
+        android:textAlignment="center"
+        android:textSize="12sp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/kyzen_grey_medium"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Safety assurance label — shown above restricted settings button.
+         Reassures users who may feel suspicious about why this step is needed. -->
+    <TextView
+        android:id="@+id/txtRestrictedAssurance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Android has restricted these permissions because Kyzen was installed manually. This is a standard Android security step — not specific to Kyzen. No extra access is being requested."
+        android:textAlignment="center"
+        android:textSize="12sp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/kyzen_grey_medium"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone" />
+
+    <!-- Button 1: Allow Restricted Settings (shown first when needed)
+         Hidden by default. Shown only on Android 13+ when the user has returned
+         from Settings without granting — indicating toggles are greyed out.
+         Must be done FIRST before the other two permissions can be granted. -->
+    <Button
+        android:id="@+id/btnAllowRestricted"
+        android:layout_width="wrap_content"
+        android:minWidth="280dp"
+        android:maxWidth="360dp"
+        android:layout_height="48dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:text="1. Allow Restricted Settings"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:letterSpacing="0.01"
+        android:stateListAnimator="@null"
+        android:backgroundTint="@color/kyzen_amber_dark"
+        android:textColor="@color/kyzen_white"
+        android:visibility="gone" />
+
+    <!-- Restricted Settings hint label -->
+    <TextView
+        android:id="@+id/txtRestrictedHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tap above  →  tap the three dots ( ⋮ ) at the top right  →  select Allow restricted settings  →  return here."
+        android:textAlignment="center"
+        android:textSize="11sp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/kyzen_amber_dark"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
+    <!-- Button 2: Usage Access -->
+    <Button
+        android:id="@+id/btnGrantUsage"
+        android:layout_width="wrap_content"
+        android:minWidth="280dp"
+        android:maxWidth="360dp"
+        android:layout_height="48dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:layout_marginTop="4dp"
+        android:text="2. Authorize Usage Access"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:letterSpacing="0.01"
+        android:stateListAnimator="@null" />
+
+    <!-- Button 3: Display Access -->
+    <Button
+        android:id="@+id/btnGrantOverlay"
+        android:layout_width="wrap_content"
+        android:minWidth="280dp"
+        android:maxWidth="360dp"
+        android:layout_height="48dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:layout_marginTop="10dp"
+        android:text="3. Authorize Display Access"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:letterSpacing="0.01"
+        android:stateListAnimator="@null" />
+
+
+</LinearLayout>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="@color/kyzen_yellow_bg">
+
+    <!-- App Logo -->
+    <ImageView
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="Kyzen Logo"
+        android:layout_marginBottom="16dp" />
+
+    <!-- App Name -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kyzen"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_green_dark"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Tagline -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AI-Driven Digital Wellbeing Coach"
+        android:textSize="14sp"
+        android:textColor="@color/kyzen_grey_dark"
+        android:layout_marginBottom="48dp" />
+
+    <!-- Who are you? label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select your profile"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/kyzen_grey_dark"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Child Mode Button -->
+    <Button
+        android:id="@+id/btnChildMode"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Child Mode"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:letterSpacing="0.05"
+        android:gravity="center"
+        android:stateListAnimator="@null"
+        android:textColor="@color/kyzen_white"
+        android:backgroundTint="@color/kyzen_green_medium"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Parent Mode Button -->
+    <Button
+        android:id="@+id/btnParentMode"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Parent Mode"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:letterSpacing="0.05"
+        android:gravity="center"
+        android:stateListAnimator="@null"
+        android:textColor="@color/kyzen_white"
+        android:backgroundTint="@color/kyzen_blue_dark"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Subtle hint -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Parent mode requires a PIN"
+        android:textSize="12sp"
+        android:textColor="@color/kyzen_blue_dark" />
+
+</LinearLayout>

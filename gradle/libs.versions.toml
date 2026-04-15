@@ -1,0 +1,45 @@
+[versions]
+agp = "9.0.1"
+ksp = "2.1.0-1.0.29"
+coreKtx = "1.17.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.7.1"
+material = "1.13.0"
+activity = "1.12.4"
+constraintlayout = "2.2.1"
+room = "2.7.0"
+coroutines = "1.10.1"
+lifecycleRuntime = "2.9.0"
+mockito = "5.12.0"
+glide = "4.16.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+# Room - Local SQLite Persistence
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+# Kotlin Coroutines - Required for all Room operations off the main thread
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+# Lifecycle - For lifecycleScope in Activities and Services
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntime" }
+# Mockito - For mocking KyzenPreferences in RewardEngine unit tests
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+# Glide - Animated GIF rendering for the rotating gem on the child dashboard
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+# kotlin-android plugin intentionally omitted — AGP 9.0.1 bundles Kotlin internally.
+# Declaring it separately causes: IllegalArgumentException: Cannot add extension 'kotlin'
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+

@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    fragment_dashboard.xml — Page 1 of ChildDashboardActivity ViewPager2
+    ─────────────────────────────────────────────────────────────────────
+    Non-scrollable. All content fits on screen.
+    Contains: Date header, Hero Wallet Card, Action Grid (GEMS + DETOX).
+
+    ID inventory (all preserved):
+      txtChildDate, txtGemWallet, txtGemsSpentToday, txtDailyCapLabel,
+      barGemsSpent, barGemsRemaining, txtChildProductiveTime,
+      txtChildEntertainmentTime, txtEarnGemsStatus, txtDetoxBreakHint,
+      btnDetoxBreak
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/kyzen_green_bg_light"
+    android:padding="20dp"
+    android:paddingBottom="16dp">
+
+    <!-- ── Date header ────────────────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/txtChildDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Today"
+        style="@style/KyzenTextTitle"
+        android:textSize="22sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- ── Hero Wallet Card — 60% of screen height ───────────────────── -->
+    <com.google.android.material.card.MaterialCardView
+        style="@style/KyzenCardHero"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:layout_marginBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="0dp">
+
+            <!-- Gem display row — fills top half of hero card.
+                 Left half: rotating GIF. Right half: square gem wallet card + GEMS label. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
+
+                <!-- Left half: rotating gem GIF, nudged left -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="28dp">
+
+                    <ImageView
+                        android:id="@+id/imgGemRotating"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="Rotating gem"
+                        android:scaleType="centerInside" />
+
+                </LinearLayout>
+
+                <!-- Right half: square gem wallet card + GEMS label below -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingEnd="4dp">
+
+                    <!-- Square gem wallet card — fills right half, rounded corners -->
+                    <LinearLayout
+                        android:id="@+id/gemWalletCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_gem_wallet_card"
+                        android:alpha="0.82"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/txtGemWallet"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="52sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/kyzen_white"
+                            android:includeFontPadding="false"
+                            android:maxLines="1" />
+
+                    </LinearLayout>
+
+                    <!-- GEMS label — below card, 8dp gap, centered under card -->
+                    <TextView
+                        android:id="@+id/txtGemsLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="GEMS"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:textColor="@color/kyzen_green_dark"
+                        android:letterSpacing="0.2"
+                        android:gravity="center"
+                        android:layout_marginTop="8dp"
+                        android:paddingEnd="4dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Achievement pill — marquee ticker -->
+            <TextView
+                android:id="@+id/txtDailyCapLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Do 2 mins of productive work to earn a gem."
+                android:textSize="12sp"
+                android:textColor="@color/kyzen_green_dark"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="@drawable/bg_achievement_pill"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Hidden views — Kotlin writes to these, must stay in tree -->
+            <TextView
+                android:id="@+id/txtGemsSpentToday"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                android:text="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <View
+                    android:id="@+id/barGemsSpent"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="0" />
+
+                <View
+                    android:id="@+id/barGemsRemaining"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+            <!-- Stats row — tall pills with prominent numbers -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingBottom="16dp">
+
+                <!-- Productive pill — FOCUS / number / MIN -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_stat_pill"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:layout_marginEnd="6dp"
+                    android:gravity="center_vertical">
+
+                    <!-- Category label — what are we measuring -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FOCUS"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:textColor="@color/kyzen_white"
+                        android:alpha="0.65"
+                        android:letterSpacing="0.15"
+                        android:layout_marginBottom="2dp" />
+
+                    <!-- The big number — hero of the pill -->
+                    <TextView
+                        android:id="@+id/txtChildProductiveTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textSize="30sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/kyzen_white"
+                        android:includeFontPadding="false"
+                        android:lineSpacingExtra="0dp"
+                        android:maxLines="1" />
+
+                    <!-- Unit label — context below the number -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MIN"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:textColor="@color/kyzen_white"
+                        android:alpha="0.55"
+                        android:letterSpacing="0.12"
+                        android:layout_marginTop="1dp" />
+
+                </LinearLayout>
+
+                <!-- Fun pill — PLAY / number / MIN -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_stat_pill_red"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center_vertical">
+
+                    <!-- Category label -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FUN"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:textColor="@color/kyzen_white"
+                        android:alpha="0.65"
+                        android:letterSpacing="0.15"
+                        android:layout_marginBottom="2dp" />
+
+                    <!-- The big number -->
+                    <TextView
+                        android:id="@+id/txtChildEntertainmentTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textSize="30sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/kyzen_white"
+                        android:includeFontPadding="false"
+                        android:lineSpacingExtra="0dp"
+                        android:maxLines="1" />
+
+                    <!-- Unit label -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MIN"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:textColor="@color/kyzen_white"
+                        android:alpha="0.55"
+                        android:letterSpacing="0.12"
+                        android:layout_marginTop="1dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── Action Grid: GEMS + DETOX — 40% of screen height ────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <!-- LEFT: GEMS Wallet card (amber) -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            app:cardBackgroundColor="@color/kyzen_amber_bg"
+            app:strokeColor="@color/kyzen_brown">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GEMS WALLET"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_amber_dark"
+                    android:letterSpacing="0.08"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Status text — wraps naturally, never truncates -->
+                <TextView
+                    android:id="@+id/txtEarnGemsStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:text="Use productive apps to earn more gems."
+                    style="@style/KyzenTextBody"
+                    android:textSize="11sp"
+                    android:textColor="@color/kyzen_grey_dark"
+                    android:lineSpacingExtra="3dp" />
+
+                <!-- How it works button — anchored to bottom, same style as Start Break -->
+                <Button
+                    android:id="@+id/btnHowItWorks"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="How it works"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textColor="@color/kyzen_white"
+                    android:backgroundTint="@color/kyzen_amber_dark"
+                    android:stateListAnimator="@null"
+                    android:letterSpacing="0.04"
+                    android:minHeight="0dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- RIGHT: Detox Break card (blue) -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/KyzenCardAction"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            app:cardBackgroundColor="@color/kyzen_blue_bg"
+            app:strokeColor="@color/kyzen_blue_dark">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DETOX"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:textColor="@color/kyzen_blue_dark"
+                    android:letterSpacing="0.08"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Screen Break"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/kyzen_blue_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/txtDetoxBreakHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:text="Step away and earn gems."
+                    style="@style/KyzenTextBody"
+                    android:textSize="12sp"
+                    android:textColor="@color/kyzen_grey_dark"
+                    android:lineSpacingExtra="3dp" />
+
+                <!-- Start break button — anchored to bottom to align with left card -->
+                <Button
+                    android:id="@+id/btnDetoxBreak"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="Start Break"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textColor="@color/kyzen_white"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:backgroundTint="@color/kyzen_blue_dark"
+                    android:stateListAnimator="@null"
+                    android:letterSpacing="0.04"
+                    android:minHeight="0dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</LinearLayout>

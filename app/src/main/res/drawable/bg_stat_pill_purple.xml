@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rounded rectangle background for the Gems stat pill in the parent dashboard.
+     Matches bg_stat_pill and bg_stat_pill_red — same 12dp corner radius. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="@color/kyzen_purple_medium" />
+</shape>
