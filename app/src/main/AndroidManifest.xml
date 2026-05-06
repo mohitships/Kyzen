@@ -31,7 +31,7 @@
         android:theme="@style/Theme.Kyzen">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.binarybrigade.kyzen.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
@@ -42,7 +42,7 @@
         </activity>
 
         <activity
-            android:name=".OverlayActivity"
+            android:name="com.binarybrigade.kyzen.OverlayActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
@@ -55,7 +55,7 @@
         <!-- singleTask prevents stacking; showWhenLocked + turnScreenOn ensure visibility -->
         <!-- even if the device screen was off when the detox started -->
         <activity
-            android:name=".DetoxBreakActivity"
+            android:name="com.binarybrigade.kyzen.DetoxBreakActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
@@ -66,39 +66,39 @@
 
         <!-- Phase 3: Mode Selection — shown on every launch after permissions granted -->
         <activity
-            android:name=".ModeSelectionActivity"
+            android:name="com.binarybrigade.kyzen.ModeSelectionActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
         <!-- Phase 3: PIN Entry — parent authentication screen -->
         <activity
-            android:name=".PinEntryActivity"
+            android:name="com.binarybrigade.kyzen.PinEntryActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden" />
 
         <!-- Phase 3: Child Dashboard — child-facing wellbeing view -->
         <activity
-            android:name=".ChildDashboardActivity"
+            android:name="com.binarybrigade.kyzen.ChildDashboardActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
         <!-- Phase 3: Parent Dashboard — admin control centre (PIN-protected) -->
         <activity
-            android:name=".ParentDashboardActivity"
+            android:name="com.binarybrigade.kyzen.ParentDashboardActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
         <!-- Phase 3: Background monitoring service -->
         <service
-            android:name=".UsageMonitorService"
+            android:name="com.binarybrigade.kyzen.UsageMonitorService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
         <!-- Phase 3: Boot + Screen-On auto-restart receiver -->
         <!-- exported="true" is REQUIRED for BOOT_COMPLETED — sent by the OS (external to our app) -->
         <receiver
-            android:name=".BootReceiver"
+            android:name="com.binarybrigade.kyzen.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
