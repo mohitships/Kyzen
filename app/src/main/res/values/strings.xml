@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Kyzen</string>
+    <string name="accessibility_service_description">Kyzen uses this service to detect when you are watching educational content on YouTube, so it can reward you with gems for productive viewing. No data is collected or sent outside your device.</string>
 </resources>
