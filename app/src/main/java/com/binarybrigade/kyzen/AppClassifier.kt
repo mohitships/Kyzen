@@ -108,15 +108,6 @@ object AppClassifier {
         "com.termux"                                to AppCategory.PRODUCTIVE, // Termux (coding)
         "com.google.android.apps.tasks"             to AppCategory.PRODUCTIVE, // Google Tasks
 
-        // ── PRODUCTIVE: Messaging (communication, not passive scrolling) ──────
-        // Aligned with Orben et al. (2022): communicative use ≠ passive use
-        "com.whatsapp"                              to AppCategory.PRODUCTIVE, // WhatsApp
-        "com.whatsapp.w4b"                          to AppCategory.PRODUCTIVE, // WhatsApp Business
-        "org.telegram.messenger"                    to AppCategory.PRODUCTIVE, // Telegram
-        "com.skype.raider"                          to AppCategory.PRODUCTIVE, // Skype
-        "com.viber.voip"                            to AppCategory.PRODUCTIVE, // Viber
-        "com.google.android.apps.messaging"         to AppCategory.PRODUCTIVE, // Google Messages
-
         // ── PRODUCTIVE: Professional Networking & Career Development ─────────
         // Career-focused platforms for job searching, professional networking,
         // skill development, and business relationship building.
@@ -141,7 +132,16 @@ object AppClassifier {
         "in.mohalla.video"                          to AppCategory.ENTERTAINMENT, // Moj
 
         // ── ENTERTAINMENT: Video & Streaming ─────────────────────────────────
-        "com.google.android.youtube"                to AppCategory.ENTERTAINMENT, // YouTube
+        // NOTE: YouTube is NOT in the knowledge base. It is handled by Layer 0
+        // (context-aware classification via YouTubeContentState) because YouTube
+        // can be either PRODUCTIVE (educational channels) or ENTERTAINMENT (gaming,
+        // vlogs, etc.). When the Accessibility Service is not enabled, YouTube
+        // defaults to NEUTRAL — the safest option (no unfair deduction, no unearned reward).
+        //
+        // NOTE: YouTube Kids is also handled by Layer 0 (same mechanism as YouTube).
+        // When accessibility is on, it reads YouTubeContentState for content-aware
+        // classification. When off, it defaults to PRODUCTIVE — YouTube Kids is
+        // specifically designed for children and contains mostly educational content.
         "com.google.android.apps.youtube.music"     to AppCategory.ENTERTAINMENT, // YouTube Music
         "com.netflix.mediaclient"                   to AppCategory.ENTERTAINMENT, // Netflix
         "com.amazon.avod.thirdpartyclient"          to AppCategory.ENTERTAINMENT, // Prime Video
@@ -182,6 +182,14 @@ object AppClassifier {
         "com.mpl.android"                           to AppCategory.ENTERTAINMENT, // MPL Gaming
 
         // ── NEUTRAL: System & Device Utilities ────────────────────────────────
+        // Messaging apps — basic communication utilities, not productive work
+        "com.google.android.apps.messaging"         to AppCategory.NEUTRAL,    // Google Messages
+        "com.whatsapp"                              to AppCategory.NEUTRAL,    // WhatsApp
+        "com.whatsapp.w4b"                          to AppCategory.NEUTRAL,    // WhatsApp Business
+        "org.telegram.messenger"                    to AppCategory.NEUTRAL,    // Telegram
+        "com.skype.raider"                          to AppCategory.NEUTRAL,    // Skype
+        "com.viber.voip"                            to AppCategory.NEUTRAL,    // Viber
+
         "com.android.chrome"                        to AppCategory.NEUTRAL,    // Chrome
         "com.brave.browser"                         to AppCategory.NEUTRAL,    // Brave
         "org.mozilla.firefox"                       to AppCategory.NEUTRAL,    // Firefox
@@ -257,7 +265,7 @@ object AppClassifier {
         // Known social names
         "instagram" to 5, "facebook" to 5, "twitter" to 5, "snapchat" to 5,
         "tiktok" to 5, "discord" to 4, "youtube" to 4, "reddit" to 4,
-        "pinterest" to 4, "telegram" to 3
+        "pinterest" to 4
     )
 
     private val neutralKeywords = mapOf(
@@ -265,11 +273,12 @@ object AppClassifier {
         "clock" to 5, "alarm" to 4, "calculator" to 5, "calendar" to 4,
         "camera" to 4, "gallery" to 4, "photos" to 3, "file" to 3,
         "files" to 4, "settings" to 5, "launcher" to 4, "dialer" to 5,
-        "contacts" to 4, "sms" to 3, "browser" to 3, "chrome" to 3,
-        "maps" to 4, "navigation" to 3, "weather" to 4, "flashlight" to 5,
-        "scanner" to 4, "translator" to 3, "wallet" to 4, "pay" to 3,
-        "bank" to 4, "upi" to 5, "vpn" to 4, "antivirus" to 4,
-        "cleaner" to 4, "booster" to 3, "shopping" to 3, "store" to 3
+        "contacts" to 4, "sms" to 4, "message" to 3, "messaging" to 4,
+        "browser" to 3, "chrome" to 3, "maps" to 4, "navigation" to 3,
+        "weather" to 4, "flashlight" to 5, "scanner" to 4, "translator" to 3,
+        "wallet" to 4, "pay" to 3, "bank" to 4, "upi" to 5, "vpn" to 4,
+        "antivirus" to 4, "cleaner" to 4, "booster" to 3, "shopping" to 3,
+        "store" to 3
     )
 
     // ─── Core Classification Function ─────────────────────────────────────────
@@ -282,6 +291,42 @@ object AppClassifier {
      * Layer 3: Fallback → NEUTRAL, 0% confidence (safest default, no credit impact).
      */
     fun classify(packageName: String, appName: String): ClassificationResult {
+
+        // ── LAYER 0: Context-Aware Classification for Dual-Nature Apps ────────
+        // YouTube can be PRODUCTIVE (educational channels) or ENTERTAINMENT (gaming,
+        // vlogs, etc.). The AccessibilityService (YouTubeContentMonitor) watches
+        // YouTube's UI in real-time and updates YouTubeContentState accordingly.
+        //
+        // Three states:
+        //   - Accessibility ON + educational content → PRODUCTIVE (90% confidence)
+        //   - Accessibility ON + non-educational    → ENTERTAINMENT (90% confidence)
+        //   - Accessibility OFF or stale (>30s)     → NEUTRAL (safest default)
+        //
+        // NEUTRAL is chosen over ENTERTAINMENT as the fallback because:
+        //   1. No unfair gem deduction when we can't verify content type
+        //   2. No unearned gem reward when we can't verify content type
+        //   3. Incentivises enabling the Accessibility Service (without it, YouTube
+        //      is "free" but earns no gems — the child wants to earn gems)
+        if (packageName.lowercase().trim() == "com.google.android.youtube") {
+            return if (YouTubeContentState.isStale()) {
+                ClassificationResult(AppCategory.NEUTRAL, 0)
+            } else {
+                ClassificationResult(YouTubeContentState.contentCategory, 90)
+            }
+        }
+
+        // YouTube Kids — same Layer 0 mechanism as YouTube.
+        // When accessibility is on, reads YouTubeContentState for content-aware
+        // classification. When off or stale, defaults to PRODUCTIVE because
+        // YouTube Kids is specifically designed for children and contains
+        // mostly educational content.
+        if (packageName.lowercase().trim() == "com.google.android.apps.youtube.kids") {
+            return if (YouTubeContentState.isStale()) {
+                ClassificationResult(AppCategory.PRODUCTIVE, 80)
+            } else {
+                ClassificationResult(YouTubeContentState.contentCategory, 90)
+            }
+        }
 
         // ── LAYER 1: Expert Knowledge Base ───────────────────────────────────
         val knownCategory = knowledgeBase[packageName.lowercase().trim()]
