@@ -67,6 +67,12 @@ class UsageMonitorService : Service() {
         const val POLL_INTERVAL_MS      = 2000L   // 2-second polling interval
         const val ACTION_START_SERVICE  = "com.binarybrigade.kyzen.START_MONITOR"
 
+        /** Static reference to the running service instance.
+         *  Used by OverlayActivity to call back into the service for
+         *  go-home and grace-period actions. */
+        var instance: UsageMonitorService? = null
+            private set
+
         /**
          * High-quality mood-lifting quotes for both overlays.
          * Rotate every 5 seconds after a 2-second initial delay.
@@ -98,6 +104,13 @@ class UsageMonitorService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     // Foreground tracking
+
+    // Classification change tracking — detects when the SAME package changes
+    // classification (e.g., YouTube ENTERTAINMENT → PRODUCTIVE when the user
+    // switches from MrBeast to Khan Academy). Without this, the accumulator
+    // flags and ms values are stale from the previous classification, causing
+    // missing gem awards or incorrect spending.
+    private var lastClassification: AppClassifier.AppCategory = AppClassifier.AppCategory.NEUTRAL
     private var currentForegroundPackage: String = ""
 
     // Entertainment spending tracker — poll-confirmed accumulator model
@@ -162,6 +175,7 @@ class UsageMonitorService : Service() {
         txRepository = GemTransactionRepository(this)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createNotificationChannels()
+        instance = this
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -177,6 +191,7 @@ class UsageMonitorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         removeOverlay()
         removeDetoxOverlay()
         gracePeriodHandler?.removeCallbacksAndMessages(null)
@@ -252,6 +267,42 @@ class UsageMonitorService : Service() {
                     val appName        = getAppName(foregroundPackage)
                     val classification = AppClassifier.classify(foregroundPackage, appName)
                     val now            = System.currentTimeMillis()
+
+                    // Debug: log classification result for diagnosing YouTube content detection
+                    android.util.Log.d("UsageMonitorService",
+                        "Foreground: $foregroundPackage ($appName) → ${classification.category} conf=${classification.confidence}")
+
+                    // -- Classification Change Detection --
+                    // When the SAME package changes classification (e.g., YouTube
+                    // ENTERTAINMENT -> PRODUCTIVE when user switches from MrBeast to
+                    // Khan Academy), we must reset accumulator flags and load the
+                    // correct ms values -- just like a package switch.
+                    if (currentForegroundPackage == foregroundPackage &&
+                        lastClassification != classification.category &&
+                        lastClassification != AppClassifier.AppCategory.NEUTRAL) {
+                        android.util.Log.d("UsageMonitorService",
+                            "Classification changed within $foregroundPackage: $lastClassification -> ${classification.category}")
+                        when (classification.category) {
+                            AppClassifier.AppCategory.PRODUCTIVE -> {
+                                // ENTERTAINMENT -> PRODUCTIVE: reset flags, load productive ms
+                                lastPollWasProductive = false
+                                lastPollWasEntertainment = false
+                                activeProductiveMs = prefs.getConfirmedProductiveMsForPackage(foregroundPackage)
+                            }
+                            AppClassifier.AppCategory.ENTERTAINMENT -> {
+                                // PRODUCTIVE -> ENTERTAINMENT: reset flags, load entertainment ms
+                                lastPollWasProductive = false
+                                lastPollWasEntertainment = false
+                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(foregroundPackage)
+                            }
+                            AppClassifier.AppCategory.NEUTRAL -> {
+                                // Any -> NEUTRAL: pause both accumulators
+                                lastPollWasProductive = false
+                                lastPollWasEntertainment = false
+                            }
+                        }
+                    }
+                    lastClassification = classification.category
 
                     when (classification.category) {
 
@@ -380,7 +431,7 @@ class UsageMonitorService : Service() {
                             }
 
                             // Dismiss overlay if gems now available
-                            if (overlayView != null && !rewardEngine.shouldIntervene()) {
+                            if ((overlayView != null || OverlayActivity.currentInstance != null) && !rewardEngine.shouldIntervene()) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
                         }
@@ -438,7 +489,7 @@ class UsageMonitorService : Service() {
                             lastPollWasProductive = true
 
                             // Auto-dismiss coaching overlay if intervention no longer needed
-                            if (overlayView != null && !rewardEngine.shouldIntervene()) {
+                            if ((overlayView != null || OverlayActivity.currentInstance != null) && !rewardEngine.shouldIntervene()) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
 
@@ -446,9 +497,15 @@ class UsageMonitorService : Service() {
                             val gemIntervalMs = KyzenPreferences.PRODUCTIVE_SECONDS_PER_GEM * 1000L
                             val gemsOwed = (activeProductiveMs / gemIntervalMs).toInt()
 
+                            // Debug: log productive accumulator state
+                            android.util.Log.d("UsageMonitorService",
+                                "Productive: $foregroundPackage activeMs=$activeProductiveMs gemsOwed=$gemsOwed wallet=${prefs.gemWallet}")
+
                             // Award only new complete blocks — never re-award
                             val newGems = prefs.awardNewProductiveGems(foregroundPackage, gemsOwed)
                             if (newGems > 0) {
+                                android.util.Log.d("UsageMonitorService",
+                                    "★ EARNED $newGems gem(s) for $foregroundPackage! Wallet now: ${prefs.gemWallet}")
                                 val label = "Focused on ${getAppName(foregroundPackage)}"
                                 repeat(newGems) {
                                     txRepository.logTransaction(
@@ -471,7 +528,7 @@ class UsageMonitorService : Service() {
                             lastPollWasEntertainment = false
 
                             // Auto-dismiss coaching overlay
-                            if (overlayView != null) {
+                            if (overlayView != null || OverlayActivity.currentInstance != null) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
                         }
@@ -511,11 +568,8 @@ class UsageMonitorService : Service() {
      */
     private fun fireCoachingIntervention(packageName: String, appName: String) {
         // Guard 1: overlay already showing — don't stack overlays
-        if (overlayView != null) return
-        // Guard 2: grace period active for this package — a queued Main-thread
-        // call from the IO polling loop may have slipped through after the child
-        // tapped "Give me 15 seconds". inGracePeriod is set on Main thread before
-        // removeOverlay(), so this check reliably catches the race condition.
+        if (OverlayActivity.currentInstance != null) return
+        // Guard 2: grace period active for this package
         if (inGracePeriod && gracePeriodPackage == packageName) return
 
         interventionCountThisSession++
@@ -548,203 +602,127 @@ class UsageMonitorService : Service() {
         // because session count resets make dynamic text unreliable across Home screen visits.
         val finalMessage = "$baseMessage\n\n(If this app is in a small window or playing audio, please swipe it away from your Recent Apps menu.)"
 
+        // ── Pill is red for empty wallet, amber for parent pause / daily cap ──
+        val pillIsRed = !prefs.isGamePauseEnabled && !prefs.isDailyCapReached()
+
+        // ── Grace used? ──────────────────────────────────────────────────────
+        val graceUsed = packageName in graceUsedPackages
+
         try {
             // Force pause any background audio/video (e.g. Spotify, YMusic)
             // This acts exactly like pressing the pause button on Bluetooth headphones.
+            // Note: launching OverlayActivity also pushes YouTube to the background,
+            // which pauses the video naturally — this is a belt-and-suspenders approach.
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
             audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
 
-            val inflater = LayoutInflater.from(this@UsageMonitorService)
-            val view     = inflater.inflate(R.layout.activity_overlay, null)
-
-            view.findViewById<TextView>(R.id.txtOverlayTitle).text   = title
-            view.findViewById<TextView>(R.id.txtOverlayMessage).text = finalMessage
-
-            // Set pill text — colour stays red for empty wallet, amber for others
-            val pillView = view.findViewById<TextView>(R.id.txtOverlayStatusPill)
-            pillView.text = pillText
-            if (!prefs.isGamePauseEnabled && !prefs.isDailyCapReached()) {
-                // Truly empty wallet — red pill (default from XML)
-                pillView.setTextColor(ContextCompat.getColor(applicationContext, R.color.kyzen_red_medium))
-                pillView.background = ContextCompat.getDrawable(applicationContext, R.drawable.bg_intervention_pill)
-            } else {
-                // Parent pause or daily cap — amber pill
-                pillView.setTextColor(ContextCompat.getColor(applicationContext, R.color.kyzen_amber_dark))
-                pillView.background = ContextCompat.getDrawable(applicationContext, R.drawable.bg_cancel_pill)
+            // Launch OverlayActivity instead of WindowManager overlay.
+            // Advantages:
+            //   1. Forces portrait orientation (fixes landscape misalignment)
+            //   2. Pushes YouTube to background → video auto-pauses
+            //   3. Activity lifecycle handles orientation changes properly
+            val intent = Intent(this@UsageMonitorService, OverlayActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra(OverlayActivity.EXTRA_TRIGGER_APP_NAME, appName)
+                putExtra(OverlayActivity.EXTRA_TRIGGER_PACKAGE, packageName)
+                putExtra(OverlayActivity.EXTRA_TITLE, title)
+                putExtra(OverlayActivity.EXTRA_MESSAGE, finalMessage)
+                putExtra(OverlayActivity.EXTRA_PILL_TEXT, pillText)
+                putExtra(OverlayActivity.EXTRA_PILL_IS_RED, pillIsRed)
+                putExtra(OverlayActivity.EXTRA_GRACE_USED, graceUsed)
             }
-
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT
-            ).apply { gravity = Gravity.TOP or Gravity.START }
-
-            overlayView = view
-            windowManager.addView(view, params)
-
-            // ── Quote rotation — starts after 2s, rotates every 5s ────────────
-            val txtQuote       = view.findViewById<TextView>(R.id.txtOverlayQuote)
-            val txtQuoteAuthor = view.findViewById<TextView>(R.id.txtOverlayQuoteAuthor)
-            val shuffledQuotes = OVERLAY_QUOTES.shuffled()
-            overlayQuoteIndex  = 0
-
-            val quoteHandler = Handler(Looper.getMainLooper())
-            overlayQuoteHandler = quoteHandler
-
-            fun showQuote(index: Int, immediate: Boolean = false) {
-                val q = shuffledQuotes[index % shuffledQuotes.size]
-                if (immediate) {
-                    // No blank gap — set text and fade in straight away
-                    txtQuote.text       = q.first
-                    txtQuoteAuthor.text = q.second
-                    ObjectAnimator.ofFloat(txtQuote, "alpha", 0f, 1f).apply {
-                        duration = 500; start()
-                    }
-                    ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 0f, 1f).apply {
-                        duration = 500; start()
-                    }
-                } else {
-                    // Subsequent quotes: fade out → swap → fade in
-                    ObjectAnimator.ofFloat(txtQuote, "alpha", 1f, 0f).apply {
-                        duration = 300; start()
-                    }
-                    ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 1f, 0f).apply {
-                        duration = 300; start()
-                    }
-                    quoteHandler.postDelayed({
-                        txtQuote.text       = q.first
-                        txtQuoteAuthor.text = q.second
-                        ObjectAnimator.ofFloat(txtQuote, "alpha", 0f, 1f).apply {
-                            duration = 500; start()
-                        }
-                        ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 0f, 1f).apply {
-                            duration = 500; start()
-                        }
-                    }, 300)
-                }
-            }
-
-            // Show first quote immediately — no blank gap
-            showQuote(overlayQuoteIndex++, immediate = true)
-
-            val quoteTicker = object : Runnable {
-                override fun run() {
-                    if (overlayView == null) return
-                    showQuote(overlayQuoteIndex++)
-                    quoteHandler.postDelayed(this, 6_000L)
-                }
-            }
-            // Subsequent quotes rotate every 6 seconds
-            quoteHandler.postDelayed(quoteTicker, 6_000L)
-
-            val btnGoBack = view.findViewById<Button>(R.id.btnGoBackToApp)
-            val btnHome   = view.findViewById<Button>(R.id.btnReturnHome)
-
-            // ── Go home action ────────────────────────────────────────────────
-            val goHome = {
-                // Critical: Record exactly when we sent the user home to invalidate ghost apps
-                lastSentHomeTimeMs = System.currentTimeMillis()
-                
-                // Ensure media is paused one last time before leaving
-                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
-                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
-                
-                removeOverlay()
-                startActivity(Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_HOME)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                })
-                
-                // Prevent infinite loop with floating windows (PiP).
-                // Give the user a 5-second escape hatch on the home screen to physically 
-                // close the floating window or swipe it away in Recents without the overlay blocking them.
-                inGracePeriod = true
-                gracePeriodPackage = packageName
-                gracePeriodHandler?.removeCallbacksAndMessages(null)
-                
-                val gpHandler = Handler(Looper.getMainLooper())
-                gracePeriodHandler = gpHandler
-                gpHandler.postDelayed({
-                    inGracePeriod = false
-                    gracePeriodPackage = ""
-                    gracePeriodHandler = null
-                    // After 5 seconds, if the PiP window is still open, the Neutral
-                    // background audio defender will automatically kick in and mute it.
-                }, 5_000L)
-            }
-
-            // ── Single button mode — grace already used for this package ────────
-            // Grace is per-package per-day. After the child uses their 15 seconds
-            // once, the package is in graceUsedPackages and no further grace is given.
-            // This applies to BOTH wallet-empty AND parent-pause scenarios equally.
-            if (packageName in graceUsedPackages) {
-                btnGoBack.visibility = View.GONE
-                btnHome.setOnClickListener { goHome() }
-                return
-            }
-
-            // ── Two button mode — first time for this package ─────────────────
-            btnHome.setOnClickListener { goHome() }
-
-            btnGoBack.setOnClickListener {
-                // CRITICAL ORDER:
-                // 1. Set inGracePeriod = true FIRST — the monitoring loop (IO thread)
-                //    checks this every 2s. Setting it before removeOverlay() ensures
-                //    that even if the next poll fires before this Handler completes,
-                //    it will see inGracePeriod=true and skip the intervention.
-                // 2. Set overlayView = null via removeOverlay() SECOND — once the
-                //    overlay is removed the guard at the top of fireCoachingIntervention
-                //    won't block re-entry, but inGracePeriod=true will.
-                inGracePeriod      = true
-                gracePeriodPackage = packageName
-                // Remove the overlay AFTER setting grace flags
-                removeOverlay()
-
-                // Return child to their app explicitly so they aren't left on home screen.
-                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-                if (launchIntent != null) {
-                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
-                                         Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                    startActivity(launchIntent)
-                }
-
-                // 15s silent grace period — child wraps up, then hard overlay fires.
-                // graceUsedPackages.add() happens HERE (after 15s) so the polling
-                // loop sees inGracePeriod=true and skips intervention for the full
-                // 15 seconds before the second overlay appears.
-                val gpHandler = Handler(Looper.getMainLooper())
-                gracePeriodHandler = gpHandler
-                gpHandler.postDelayed({
-                    inGracePeriod      = false
-                    gracePeriodPackage = ""
-                    gracePeriodHandler = null
-                    // Mark grace as used NOW — any subsequent overlay will be single-button
-                    graceUsedPackages.add(packageName)
-                    if (overlayView != null) return@postDelayed
-                    // Check on IO thread to avoid blocking Main
-                    serviceScope.launch {
-                        val currentPkg = getCurrentForegroundPackage()
-                        if (currentPkg == packageName && rewardEngine.shouldIntervene()) {
-                            withContext(Dispatchers.Main) {
-                                // Single button mode — grace now marked above
-                                fireCoachingIntervention(packageName, appName)
-                            }
-                        }
-                    }
-                }, 15_000L)
-            }
+            startActivity(intent)
 
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    // ─── Callbacks from OverlayActivity ─────────────────────────────────────────
+
     /**
+     * Called by OverlayActivity when the child taps "I'm Ready — Take a Break".
+     * Pauses media, sends child home, starts 5s grace for PiP windows.
+     */
+    fun onOverlayGoHome(packageName: String) {
+        // Record exactly when we sent the user home to invalidate ghost apps
+        lastSentHomeTimeMs = System.currentTimeMillis()
+
+        // Ensure media is paused one last time before leaving
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
+        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
+
+        // Send child to home screen
+        startActivity(Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        })
+
+        // Prevent infinite loop with floating windows (PiP).
+        // Give the user a 5-second escape hatch on the home screen to physically
+        // close the floating window or swipe it away in Recents.
+        inGracePeriod = true
+        gracePeriodPackage = packageName
+        gracePeriodHandler?.removeCallbacksAndMessages(null)
+
+        val gpHandler = Handler(Looper.getMainLooper())
+        gracePeriodHandler = gpHandler
+        gpHandler.postDelayed({
+            inGracePeriod = false
+            gracePeriodPackage = ""
+            gracePeriodHandler = null
+            // After 5 seconds, if the PiP window is still open, the Neutral
+            // background audio defender will automatically kick in and mute it.
+        }, 5_000L)
+    }
+
+    /**
+     * Called by OverlayActivity when the child taps "Give me 15 seconds to wrap up".
+     * Sets grace period, returns child to their app, starts 15s timer.
+     */
+    fun onOverlayGraceRequested(packageName: String, appName: String) {
+        // CRITICAL ORDER:
+        // 1. Set inGracePeriod = true FIRST — the monitoring loop (IO thread)
+        //    checks this every 2s. Setting it before the overlay disappears ensures
+        //    that even if the next poll fires before this completes, it will see
+        //    inGracePeriod=true and skip the intervention.
+        inGracePeriod      = true
+        gracePeriodPackage = packageName
+
+        // Return child to their app explicitly so they aren't left on home screen.
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent != null) {
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
+                                 Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            startActivity(launchIntent)
+        }
+
+        // 15s silent grace period — child wraps up, then hard overlay fires.
+        val gpHandler = Handler(Looper.getMainLooper())
+        gracePeriodHandler = gpHandler
+        gpHandler.postDelayed({
+            inGracePeriod      = false
+            gracePeriodPackage = ""
+            gracePeriodHandler = null
+            // Mark grace as used NOW — any subsequent overlay will be single-button
+            graceUsedPackages.add(packageName)
+            if (OverlayActivity.currentInstance != null) return@postDelayed
+            // Check on IO thread to avoid blocking Main
+            serviceScope.launch {
+                val currentPkg = getCurrentForegroundPackage()
+                if (currentPkg == packageName && rewardEngine.shouldIntervene()) {
+                    withContext(Dispatchers.Main) {
+                        // Single button mode — grace now marked above
+                        fireCoachingIntervention(packageName, appName)
+                    }
+                }
+            }
+        }, 15_000L)
+    }
+
+        /**
      * Fires a push notification warning when gems are running low (≤ LOW_GEM_THRESHOLD).
      * Gives the child advance notice so they can wrap up naturally before the overlay fires.
      */
@@ -779,6 +757,8 @@ class UsageMonitorService : Service() {
             try { windowManager.removeView(it) } catch (e: Exception) { e.printStackTrace() }
             overlayView = null
         }
+        // Also dismiss OverlayActivity if it's showing
+        OverlayActivity.currentInstance?.finish()
     }
 
     // ─── Detox Enforcement Overlay ────────────────────────────────────────────
