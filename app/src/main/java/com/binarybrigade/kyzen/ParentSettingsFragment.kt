@@ -111,6 +111,14 @@ class ParentSettingsFragment : Fragment() {
         // prevent spurious "Entertainment paused/resumed" Toast on resume.
         restoreCurrentSettings()
         loadSummaryStats()
+
+        // Remind parent if YouTube content detection is not enabled —
+        // without it, YouTube is classified as NEUTRAL (no gems earned or spent).
+        if (!prefs.isYouTubeContentMonitorEnabled()) {
+            Toast.makeText(requireContext(),
+                "YouTube content detection is off. Enable it in Accessibility Settings to classify YouTube as productive or entertainment.",
+                Toast.LENGTH_LONG).show()
+        }
     }
 
     // ─── View Binding ─────────────────────────────────────────────────────────

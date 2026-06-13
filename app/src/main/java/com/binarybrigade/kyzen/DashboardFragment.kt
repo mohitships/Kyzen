@@ -287,13 +287,17 @@ class DashboardFragment : Fragment() {
             txtChildProductiveTime.text    = "$productiveMins"
             txtChildEntertainmentTime.text = "$entertainmentMins"
 
+            val accessibilityHint = if (!prefs.isYouTubeContentMonitorEnabled()) {
+                "\n\n💡 Tip: Enable YouTube content detection in Settings to earn gems while watching educational videos."
+            } else ""
+
             txtEarnGemsStatus.text = when {
                 status.gemsInWallet == 0 && !prefs.isDetoxActive ->
-                    "Wallet empty. Use a productive app for 2 mins to earn 1 gem, or take a screen break to earn ${KyzenPreferences.DEFAULT_DETOX_BONUS}."
+                    "Wallet empty. Use a productive app for 2 mins to earn 1 gem, or take a screen break to earn ${KyzenPreferences.DEFAULT_DETOX_BONUS}.$accessibilityHint"
                 status.isDailyCapReached ->
                     "Daily allowance used. Your ${status.gemsInWallet} gems carry forward to tomorrow."
                 status.gemsInWallet < 10 ->
-                    "${status.gemsInWallet} gems remaining. Keep using productive apps to earn more."
+                    "${status.gemsInWallet} gems remaining. Keep using productive apps to earn more.$accessibilityHint"
                 else ->
                     "${status.gemsInWallet} gems in your wallet. Earned through focused work."
             }
