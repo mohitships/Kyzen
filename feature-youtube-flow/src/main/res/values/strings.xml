@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Flow library strings — minimal extraction.
+        The full 1815-line strings.xml was stripped because it referenced UI screens
+        that were removed during the Shorts deconstruction and minimal extraction.
+        FlowPlayerActivity uses no string resources (Compose UI is code-defined).
+    -->
+</resources>

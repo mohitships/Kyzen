@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Flow library themes stripped for minimal extraction.
+        FlowPlayerActivity uses Theme.AppCompat.DayNight.NoActionBar (from :app's
+        appcompat dependency), declared in the library manifest. No Flow-specific
+        theme is needed for the minimal player shell.
+    -->
+</resources>

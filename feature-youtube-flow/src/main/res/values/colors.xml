@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Flow library colors — minimal extraction.
+        Flow-specific colors (launcher icons, app theme) were stripped because
+        they are not used by the minimal player shell and could conflict with
+        Kyzen's color resources during merge.
+    -->
+</resources>
