@@ -31,6 +31,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.github.aedev.flow.ui.player.FlowPlayerActivity
+import io.github.aedev.flow.ui.player.FlowPlaybackState
 
 /**
  * UsageMonitorService — Persistent Background Foreground Session Monitor
@@ -67,11 +69,13 @@ class UsageMonitorService : Service() {
         const val POLL_INTERVAL_MS      = 2000L   // 2-second polling interval
         const val ACTION_START_SERVICE  = "com.binarybrigade.kyzen.START_MONITOR"
 
-        /** Static reference to the running service instance.
-         *  Used by OverlayActivity to call back into the service for
-         *  go-home and grace-period actions. */
-        var instance: UsageMonitorService? = null
-            private set
+        // Phase 3: The official YouTube app package — triggers the intercept overlay.
+        const val YOUTUBE_PACKAGE = "com.google.android.youtube"
+
+        // Phase 3: Safety timeout for the interceptInProgress flag (Patch 1b).
+        // If FlowPlayerActivity fails to reach onResume within 5 seconds, the flag
+        // auto-clears to prevent the monitor from being stuck skipping all tracking.
+        const val INTERCEPT_TIMEOUT_MS = 5000L
 
         /**
          * High-quality mood-lifting quotes for both overlays.
@@ -104,13 +108,6 @@ class UsageMonitorService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     // Foreground tracking
-
-    // Classification change tracking — detects when the SAME package changes
-    // classification (e.g., YouTube ENTERTAINMENT → PRODUCTIVE when the user
-    // switches from MrBeast to Khan Academy). Without this, the accumulator
-    // flags and ms values are stale from the previous classification, causing
-    // missing gem awards or incorrect spending.
-    private var lastClassification: AppClassifier.AppCategory = AppClassifier.AppCategory.NEUTRAL
     private var currentForegroundPackage: String = ""
 
     // Entertainment spending tracker — poll-confirmed accumulator model
@@ -142,6 +139,33 @@ class UsageMonitorService : Service() {
     private var detoxQuoteHandler: Handler? = null        // quote rotation for detox overlay
     private var overlayQuoteIndex: Int = 0                // current quote index, shuffled per show
     private lateinit var windowManager: WindowManager
+
+    // ── Phase 3: YouTube Launch Intercept Overlay ──────────────────────────────
+    // Shown when the child opens the official YouTube app. Asks "Watch for Fun"
+    // or "Watch for Learning". On "Learning", launches FlowPlayerActivity.
+    private var interceptOverlayView: View? = null
+
+    // Transition race protection (Patch 1 & 1b).
+    // Set true when the child taps "Watch for Learning" — suppresses the audio-mute
+    // defender (line 201) and coaching intervention during the brief window between
+    // overlay dismiss and FlowPlayerActivity.onResume() writing isPlayerActive=true.
+    // Cleared by FlowPlaybackState.isPlayerActive becoming true (detected on next poll)
+    // OR by a 5-second safety timeout (Patch 1b) if Flow fails to reach onResume.
+    @Volatile
+    private var interceptInProgress: Boolean = false
+    private var interceptTimeoutHandler: Handler? = null
+
+    // Phase 3: Remembers the child chose "Watch for Fun" for the current YouTube
+    // session. Prevents the intercept overlay from re-showing every 2s poll after
+    // the child dismisses it. Reset when YouTube leaves the foreground.
+    private var youTubeFunChoiceMade: Boolean = false
+
+    // ── Phase 5: Mid-session category-flip tracking (Chameleon Protection) ──────
+    // Tracks the last synthetic category the monitor saw for the Flow package.
+    // When the category flips mid-session (e.g., educational → gaming without
+    // leaving Flow), the monitor resets the opposing accumulator to prevent
+    // ghost-debt from stale tracking state bleeding across categories.
+    private var lastCategoryForFlowPkg: String? = null
 
     // Low-gem warning — fired once per entertainment session when gems drop to threshold
     private var lowGemWarningSentThisSession: Boolean = false
@@ -175,7 +199,6 @@ class UsageMonitorService : Service() {
         txRepository = GemTransactionRepository(this)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createNotificationChannels()
-        instance = this
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -191,9 +214,11 @@ class UsageMonitorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        instance = null
         removeOverlay()
         removeDetoxOverlay()
+        removeInterceptOverlay()
+        interceptTimeoutHandler?.removeCallbacksAndMessages(null)
+        interceptTimeoutHandler = null
         gracePeriodHandler?.removeCallbacksAndMessages(null)
         gracePeriodHandler = null
         serviceJob.cancel()
@@ -208,6 +233,27 @@ class UsageMonitorService : Service() {
             try {
                 // 1. Check for midnight day boundary → daily reset
                 checkAndPerformDailyReset()
+
+                // ── Phase 3: Intercept transition race guard (Patch 1) ──────────
+                // If the child just tapped "Watch for Learning", interceptInProgress
+                // is true. We skip the ENTIRE cycle (audio-mute, detox, economy)
+                // until FlowPlayerActivity.onResume() sets FlowPlaybackState.isPlayerActive
+                // to true (detected on the next poll) OR the 5s safety timeout fires.
+                // This prevents the audio-mute defender (below) and coaching
+                // intervention from firing during the sub-second transition window
+                // where YouTube is still the last-resumed package.
+                if (interceptInProgress) {
+                    // Check if Flow has reached onResume — clear the flag and resume tracking
+                    if (FlowPlaybackState.isPlayerActive) {
+                        interceptInProgress = false
+                        interceptTimeoutHandler?.removeCallbacksAndMessages(null)
+                        interceptTimeoutHandler = null
+                    } else {
+                        // Still transitioning — skip this entire poll cycle
+                        delay(POLL_INTERVAL_MS)
+                        continue
+                    }
+                }
 
                 // 2. Global Audio Mute (The Ultimate Defender)
                 // If gems are 0 or the parent hit pause, the device simply CANNOT play media.
@@ -234,6 +280,30 @@ class UsageMonitorService : Service() {
                 // 3. Detect current foreground app
                 val foregroundPackage = getCurrentForegroundPackage()
 
+                // ── Phase 3: YouTube Launch Intercept ───────────────────────────
+                // When the child opens the official YouTube app, show the choice overlay
+                // ("Watch for Fun" / "Watch for Learning") if it's not already showing.
+                // Skip if detox is active (detox enforcement takes priority) or if
+                // the coaching overlay is already showing (wallet empty — the child
+                // can only watch for learning, handled by the coaching overlay).
+                if (foregroundPackage == YOUTUBE_PACKAGE &&
+                    interceptOverlayView == null &&
+                    overlayView == null &&
+                    !prefs.isDetoxActive &&
+                    !youTubeFunChoiceMade) {
+                    withContext(Dispatchers.Main) {
+                        showYouTubeInterceptOverlay()
+                    }
+                } else if (foregroundPackage != YOUTUBE_PACKAGE) {
+                    // Child left YouTube (or never opened it) — clean up.
+                    if (interceptOverlayView != null) {
+                        withContext(Dispatchers.Main) { removeInterceptOverlay() }
+                    }
+                    // Reset the "Watch for Fun" choice memory so the next time the
+                    // child opens YouTube, the intercept overlay shows again.
+                    youTubeFunChoiceMade = false
+                }
+
                 // ── Detox break enforcement ────────────────────────────────
                 if (prefs.isDetoxActive) {
                     val elapsedMs = System.currentTimeMillis() - prefs.detoxStartMs
@@ -245,12 +315,24 @@ class UsageMonitorService : Service() {
                         prefs.endDetoxSession()   // clear flag FIRST
                         prefs.awardDetoxBonus()   // then award
                         withContext(Dispatchers.Main) { removeDetoxOverlay() }
-                    } else if (foregroundPackage.isNotEmpty() &&
-                               foregroundPackage != applicationContext.packageName) {
-                        val remaining = prefs.detoxTotalDurationMs - elapsedMs
-                        withContext(Dispatchers.Main) { showDetoxOverlay(remaining) }
-                        delay(POLL_INTERVAL_MS)
-                        continue
+                    } else if (foregroundPackage.isNotEmpty()) {
+                        // ── Phase 5: Detox gate with category awareness (Patch 2) ──
+                        // Use the helper to resolve Flow's synthetic package. Educational
+                        // Flow (flow_productive) is aligned with detox's intent (studying),
+                        // so it must NOT trigger the lockout overlay. Only flow_entertainment
+                        // and external apps trigger the detox lock.
+                        //
+                        // NOTE: The raw `!= applicationContext.packageName` check was removed
+                        // from the outer condition because it blocked Flow before the helper
+                        // could translate it (Flow IS our package). The helper returns null for
+                        // the dashboard (self-exclude) and the synthetic key for Flow.
+                        val detoxPkg = effectiveTrackablePackage(foregroundPackage)
+                        if (detoxPkg != null && detoxPkg != "flow_productive") {
+                            val remaining = prefs.detoxTotalDurationMs - elapsedMs
+                            withContext(Dispatchers.Main) { showDetoxOverlay(remaining) }
+                            delay(POLL_INTERVAL_MS)
+                            continue
+                        }
                     }
                     delay(POLL_INTERVAL_MS)
                     continue
@@ -261,48 +343,56 @@ class UsageMonitorService : Service() {
                 }
 
                 // ── App tracking & Gems economy ────────────────────────────
-                if (foregroundPackage.isNotEmpty() &&
-                    foregroundPackage != applicationContext.packageName) {
+                // Phase 5: Use the packaging translator to resolve Flow's synthetic
+                // package. When Flow is active, the helper returns "flow_productive"
+                // or "flow_entertainment" — these synthetic keys flow through the
+                // existing accumulator logic unchanged (KyzenPreferences prefix-key
+                // design is package-name-agnostic).
+                val trackablePkg = effectiveTrackablePackage(foregroundPackage)
+                if (trackablePkg != null) {
 
-                    val appName        = getAppName(foregroundPackage)
-                    val classification = AppClassifier.classify(foregroundPackage, appName)
-                    val now            = System.currentTimeMillis()
-
-                    // Debug: log classification result for diagnosing YouTube content detection
-                    android.util.Log.d("UsageMonitorService",
-                        "Foreground: $foregroundPackage ($appName) → ${classification.category} conf=${classification.confidence}")
-
-                    // -- Classification Change Detection --
-                    // When the SAME package changes classification (e.g., YouTube
-                    // ENTERTAINMENT -> PRODUCTIVE when user switches from MrBeast to
-                    // Khan Academy), we must reset accumulator flags and load the
-                    // correct ms values -- just like a package switch.
-                    if (currentForegroundPackage == foregroundPackage &&
-                        lastClassification != classification.category &&
-                        lastClassification != AppClassifier.AppCategory.NEUTRAL) {
-                        android.util.Log.d("UsageMonitorService",
-                            "Classification changed within $foregroundPackage: $lastClassification -> ${classification.category}")
-                        when (classification.category) {
-                            AppClassifier.AppCategory.PRODUCTIVE -> {
-                                // ENTERTAINMENT -> PRODUCTIVE: reset flags, load productive ms
-                                lastPollWasProductive = false
+                    // ── Phase 5: Mid-session category-flip reset (Chameleon Protection) ──
+                    // If Flow's category changed since the last poll (e.g., educational →
+                    // gaming without leaving Flow), reset the opposing accumulator to prevent
+                    // ghost-debt from stale tracking state bleeding across categories.
+                    if (trackablePkg.startsWith("flow_")) {
+                        val currentFlowCategory = if (trackablePkg == "flow_productive") "PRODUCTIVE" else "ENTERTAINMENT"
+                        if (lastCategoryForFlowPkg != null && lastCategoryForFlowPkg != currentFlowCategory) {
+                            // Category flipped mid-session — surgical reset of opposing accumulator
+                            if (currentFlowCategory == "PRODUCTIVE") {
+                                // Was entertainment, now productive — reset entertainment state
+                                activeEntertainmentMs = 0L
+                                prefs.setConfirmedEntertainmentMsForPackage("flow_entertainment", 0L)
                                 lastPollWasEntertainment = false
-                                activeProductiveMs = prefs.getConfirmedProductiveMsForPackage(foregroundPackage)
-                            }
-                            AppClassifier.AppCategory.ENTERTAINMENT -> {
-                                // PRODUCTIVE -> ENTERTAINMENT: reset flags, load entertainment ms
+                            } else {
+                                // Was productive, now entertainment — reset productive state
+                                activeProductiveMs = 0L
+                                prefs.setConfirmedProductiveMsForPackage("flow_productive", 0L)
                                 lastPollWasProductive = false
-                                lastPollWasEntertainment = false
-                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(foregroundPackage)
                             }
-                            AppClassifier.AppCategory.NEUTRAL -> {
-                                // Any -> NEUTRAL: pause both accumulators
-                                lastPollWasProductive = false
-                                lastPollWasEntertainment = false
-                            }
+                            // Reset session warning state for the new category
+                            lowGemWarningSentThisSession = false
+                            interventionCountThisSession = 0
                         }
+                        lastCategoryForFlowPkg = currentFlowCategory
                     }
-                    lastClassification = classification.category
+
+                    val appName        = getAppName(trackablePkg)
+                    // Phase 5: For synthetic Flow keys, derive classification directly
+                    // from the key (not AppClassifier, which has no entry for them).
+                    // For external packages, use AppClassifier as before.
+                    val classification = if (trackablePkg == "flow_productive") {
+                        AppClassifier.ClassificationResult(
+                            AppClassifier.AppCategory.PRODUCTIVE, 100
+                        )
+                    } else if (trackablePkg == "flow_entertainment") {
+                        AppClassifier.ClassificationResult(
+                            AppClassifier.AppCategory.ENTERTAINMENT, 100
+                        )
+                    } else {
+                        AppClassifier.classify(trackablePkg, appName)
+                    }
+                    val now            = System.currentTimeMillis()
 
                     when (classification.category) {
 
@@ -311,9 +401,9 @@ class UsageMonitorService : Service() {
                             // Mirrors the productive model exactly — only counts time our
                             // 2s poll CONFIRMS the app is in foreground. No session timers.
 
-                            if (currentForegroundPackage != foregroundPackage) {
+                            if (currentForegroundPackage != trackablePkg) {
                                 // Switched TO this entertainment app
-                                currentForegroundPackage     = foregroundPackage
+                                currentForegroundPackage     = trackablePkg
                                 entertainmentSessionStartMs  = now
                                 lastGemSpentMs               = now // re-entry detection sentinel
                                 productiveSessionStartMs     = 0L
@@ -322,9 +412,9 @@ class UsageMonitorService : Service() {
                                 lowGemWarningSentThisSession = false
                                 interventionCountThisSession = 0
                                 // Load already-confirmed entertainment ms for this package
-                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(foregroundPackage)
+                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(trackablePkg)
                                 // Cancel grace period if it was for a different package
-                                if (inGracePeriod && gracePeriodPackage != foregroundPackage) {
+                                if (inGracePeriod && gracePeriodPackage != trackablePkg) {
                                     gracePeriodHandler?.removeCallbacksAndMessages(null)
                                     gracePeriodHandler = null
                                     inGracePeriod      = false
@@ -338,13 +428,13 @@ class UsageMonitorService : Service() {
                                 lastPollWasEntertainment     = false
                                 lowGemWarningSentThisSession = false
                                 interventionCountThisSession = 0
-                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(foregroundPackage)
+                                activeEntertainmentMs = prefs.getConfirmedEntertainmentMsForPackage(trackablePkg)
                             }
 
                             // Add one poll interval of confirmed entertainment foreground time
                             if (lastPollWasEntertainment) {
                                 activeEntertainmentMs += POLL_INTERVAL_MS
-                                prefs.setConfirmedEntertainmentMsForPackage(foregroundPackage, activeEntertainmentMs)
+                                prefs.setConfirmedEntertainmentMsForPackage(trackablePkg, activeEntertainmentMs)
                             }
                             lastPollWasEntertainment = true
 
@@ -358,7 +448,7 @@ class UsageMonitorService : Service() {
 
                             // ── Coaching intervention check ───────────────────
                             if (rewardEngine.shouldIntervene()) {
-                                if (inGracePeriod && gracePeriodPackage == foregroundPackage) {
+                                if (inGracePeriod && gracePeriodPackage == trackablePkg) {
                                     continue
                                 }
                                 // ── Ghost-debt fix (accumulator reset) ───────────
@@ -373,7 +463,7 @@ class UsageMonitorService : Service() {
                                 // into the next session and immediately trigger a new
                                 // huge gemsOwed calculation.
                                 activeEntertainmentMs = 0L
-                                prefs.setConfirmedEntertainmentMsForPackage(foregroundPackage, 0L)
+                                prefs.setConfirmedEntertainmentMsForPackage(trackablePkg, 0L)
                                 // ── Session state reset on block ─────────────────
                                 // Bug A fix: re-arm the low-gem warning so the child
                                 // gets a fresh heads-up warning after a parent top-up.
@@ -383,7 +473,7 @@ class UsageMonitorService : Service() {
                                 // break" tone, not the harsh "Time to step away" tone.
                                 interventionCountThisSession = 0
                                 withContext(Dispatchers.Main) {
-                                    fireCoachingIntervention(foregroundPackage, appName)
+                                    fireCoachingIntervention(trackablePkg, appName)
                                 }
                                 continue
                             }
@@ -391,14 +481,14 @@ class UsageMonitorService : Service() {
                             // ── Spend gems for confirmed entertainment time ────
                             val entIntervalMs = KyzenPreferences.ENTERTAINMENT_SECONDS_PER_GEM * 1000L
                             val gemsOwed  = (activeEntertainmentMs / entIntervalMs).toInt()
-                            val spent = prefs.spendNewEntertainmentGems(foregroundPackage, gemsOwed)
+                            val spent = prefs.spendNewEntertainmentGems(trackablePkg, gemsOwed)
                             if (spent > 0) {
                                 // Child successfully spent gems — wallet was topped up by parent.
                                 // Reset grace eligibility so the child gets "Give me 15 seconds"
                                 // again after a genuine fresh wallet top-up. Only done here
                                 // (on actual spend) — NOT on every intervention fire — to prevent
                                 // infinite grace when isGamePauseEnabled or wallet stays at 0.
-                                graceUsedPackages.remove(foregroundPackage)
+                                graceUsedPackages.remove(trackablePkg)
                                 repeat(spent) {
                                     txRepository.logTransaction(
                                         GemTransactionRepository.TYPE_ENTERTAINMENT_SPEND,
@@ -410,13 +500,13 @@ class UsageMonitorService : Service() {
 
                             // If wallet now empty after spending, fire intervention
                             if (rewardEngine.shouldIntervene()) {
-                                if (!inGracePeriod || gracePeriodPackage != foregroundPackage) {
+                                if (!inGracePeriod || gracePeriodPackage != trackablePkg) {
                                     // ── Ghost-debt fix (post-spend accumulator reset) ─
                                     // Wallet just hit zero during this poll's spend loop.
                                     // Reset confirmed ms so the next session after a
                                     // parent top-up starts from zero — no phantom debt.
                                     activeEntertainmentMs = 0L
-                                    prefs.setConfirmedEntertainmentMsForPackage(foregroundPackage, 0L)
+                                    prefs.setConfirmedEntertainmentMsForPackage(trackablePkg, 0L)
                                     // ── Session state reset on block ─────────────────
                                     // Bug A fix: re-arm low-gem warning for next session.
                                     lowGemWarningSentThisSession = false
@@ -424,14 +514,14 @@ class UsageMonitorService : Service() {
                                     // on first intervention after a parent top-up.
                                     interventionCountThisSession = 0
                                     withContext(Dispatchers.Main) {
-                                        fireCoachingIntervention(foregroundPackage, appName)
+                                        fireCoachingIntervention(trackablePkg, appName)
                                     }
                                     continue
                                 }
                             }
 
                             // Dismiss overlay if gems now available
-                            if ((overlayView != null || OverlayActivity.currentInstance != null) && !rewardEngine.shouldIntervene()) {
+                            if (overlayView != null && !rewardEngine.shouldIntervene()) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
                         }
@@ -452,22 +542,10 @@ class UsageMonitorService : Service() {
                             //   - awardNewProductiveGems() ensures no double-awards
                             //   - On return after switch → activeProductiveMs resumes from 0
                             //     (previous session's gems already counted via prefs counter)
-                            //
-                            // Example: Coursera 1 min → YouTube 5 min → Coursera 1 min more:
-                            //   Session 1: activeMs accumulates to 60_000 → gemsOwed=0. Switch.
-                            //   Session 2: activeMs resets to 0. gemsAwarded still = 0 from prefs.
-                            //   activeMs accumulates to 60_000 → total "genuine" time = 120_000ms
-                            //   BUT activeMs only has 60_000ms in session 2 → gemsOwed still 0.
-                            //   ❌ This misses cross-session accumulation.
-                            //
-                            // CORRECT approach for cross-session: persist activeProductiveMs
-                            // per package in prefs so it survives app switches.
-                            // gemsOwed = floor(totalConfirmedMs / 120_000)
-                            // awardNewProductiveGems() guards against double-award.
 
-                            if (currentForegroundPackage != foregroundPackage) {
+                            if (currentForegroundPackage != trackablePkg) {
                                 // App switched TO this productive app — reset session state
-                                currentForegroundPackage    = foregroundPackage
+                                currentForegroundPackage    = trackablePkg
                                 productiveSessionStartMs    = now
                                 entertainmentSessionStartMs = 0L
                                 lastGemSpentMs              = 0L  // sentinel: cleared so entertainment re-entry detected
@@ -475,7 +553,7 @@ class UsageMonitorService : Service() {
                                 lastPollWasEntertainment    = false
                                 // Load already-confirmed ms for this package from prefs
                                 // so cross-session accumulation works correctly
-                                activeProductiveMs = prefs.getConfirmedProductiveMsForPackage(foregroundPackage)
+                                activeProductiveMs = prefs.getConfirmedProductiveMsForPackage(trackablePkg)
                             }
 
                             // Add one poll interval of confirmed foreground time
@@ -484,12 +562,12 @@ class UsageMonitorService : Service() {
                             if (lastPollWasProductive) {
                                 activeProductiveMs += POLL_INTERVAL_MS
                                 // Persist updated confirmed ms to prefs
-                                prefs.setConfirmedProductiveMsForPackage(foregroundPackage, activeProductiveMs)
+                                prefs.setConfirmedProductiveMsForPackage(trackablePkg, activeProductiveMs)
                             }
                             lastPollWasProductive = true
 
                             // Auto-dismiss coaching overlay if intervention no longer needed
-                            if ((overlayView != null || OverlayActivity.currentInstance != null) && !rewardEngine.shouldIntervene()) {
+                            if (overlayView != null && !rewardEngine.shouldIntervene()) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
 
@@ -497,16 +575,10 @@ class UsageMonitorService : Service() {
                             val gemIntervalMs = KyzenPreferences.PRODUCTIVE_SECONDS_PER_GEM * 1000L
                             val gemsOwed = (activeProductiveMs / gemIntervalMs).toInt()
 
-                            // Debug: log productive accumulator state
-                            android.util.Log.d("UsageMonitorService",
-                                "Productive: $foregroundPackage activeMs=$activeProductiveMs gemsOwed=$gemsOwed wallet=${prefs.gemWallet}")
-
                             // Award only new complete blocks — never re-award
-                            val newGems = prefs.awardNewProductiveGems(foregroundPackage, gemsOwed)
+                            val newGems = prefs.awardNewProductiveGems(trackablePkg, gemsOwed)
                             if (newGems > 0) {
-                                android.util.Log.d("UsageMonitorService",
-                                    "★ EARNED $newGems gem(s) for $foregroundPackage! Wallet now: ${prefs.gemWallet}")
-                                val label = "Focused on ${getAppName(foregroundPackage)}"
+                                val label = "Focused on $appName"
                                 repeat(newGems) {
                                     txRepository.logTransaction(
                                         GemTransactionRepository.TYPE_PRODUCTIVE_EARN, +1, label
@@ -517,8 +589,8 @@ class UsageMonitorService : Service() {
 
                         AppClassifier.AppCategory.NEUTRAL -> {
                             // Neutral apps: reset session trackers
-                            if (currentForegroundPackage != foregroundPackage) {
-                                currentForegroundPackage    = foregroundPackage
+                            if (currentForegroundPackage != trackablePkg) {
+                                currentForegroundPackage    = trackablePkg
                                 entertainmentSessionStartMs = 0L
                                 lastGemSpentMs              = 0L  // sentinel: cleared so re-entry detected
                                 productiveSessionStartMs    = 0L
@@ -528,7 +600,7 @@ class UsageMonitorService : Service() {
                             lastPollWasEntertainment = false
 
                             // Auto-dismiss coaching overlay
-                            if (overlayView != null || OverlayActivity.currentInstance != null) {
+                            if (overlayView != null) {
                                 withContext(Dispatchers.Main) { removeOverlay() }
                             }
                         }
@@ -568,8 +640,11 @@ class UsageMonitorService : Service() {
      */
     private fun fireCoachingIntervention(packageName: String, appName: String) {
         // Guard 1: overlay already showing — don't stack overlays
-        if (OverlayActivity.currentInstance != null) return
-        // Guard 2: grace period active for this package
+        if (overlayView != null) return
+        // Guard 2: grace period active for this package — a queued Main-thread
+        // call from the IO polling loop may have slipped through after the child
+        // tapped "Give me 15 seconds". inGracePeriod is set on Main thread before
+        // removeOverlay(), so this check reliably catches the race condition.
         if (inGracePeriod && gracePeriodPackage == packageName) return
 
         interventionCountThisSession++
@@ -602,127 +677,203 @@ class UsageMonitorService : Service() {
         // because session count resets make dynamic text unreliable across Home screen visits.
         val finalMessage = "$baseMessage\n\n(If this app is in a small window or playing audio, please swipe it away from your Recent Apps menu.)"
 
-        // ── Pill is red for empty wallet, amber for parent pause / daily cap ──
-        val pillIsRed = !prefs.isGamePauseEnabled && !prefs.isDailyCapReached()
-
-        // ── Grace used? ──────────────────────────────────────────────────────
-        val graceUsed = packageName in graceUsedPackages
-
         try {
             // Force pause any background audio/video (e.g. Spotify, YMusic)
             // This acts exactly like pressing the pause button on Bluetooth headphones.
-            // Note: launching OverlayActivity also pushes YouTube to the background,
-            // which pauses the video naturally — this is a belt-and-suspenders approach.
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
             audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
 
-            // Launch OverlayActivity instead of WindowManager overlay.
-            // Advantages:
-            //   1. Forces portrait orientation (fixes landscape misalignment)
-            //   2. Pushes YouTube to background → video auto-pauses
-            //   3. Activity lifecycle handles orientation changes properly
-            val intent = Intent(this@UsageMonitorService, OverlayActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                putExtra(OverlayActivity.EXTRA_TRIGGER_APP_NAME, appName)
-                putExtra(OverlayActivity.EXTRA_TRIGGER_PACKAGE, packageName)
-                putExtra(OverlayActivity.EXTRA_TITLE, title)
-                putExtra(OverlayActivity.EXTRA_MESSAGE, finalMessage)
-                putExtra(OverlayActivity.EXTRA_PILL_TEXT, pillText)
-                putExtra(OverlayActivity.EXTRA_PILL_IS_RED, pillIsRed)
-                putExtra(OverlayActivity.EXTRA_GRACE_USED, graceUsed)
+            val inflater = LayoutInflater.from(this@UsageMonitorService)
+            val view     = inflater.inflate(R.layout.activity_overlay, null)
+
+            view.findViewById<TextView>(R.id.txtOverlayTitle).text   = title
+            view.findViewById<TextView>(R.id.txtOverlayMessage).text = finalMessage
+
+            // Set pill text — colour stays red for empty wallet, amber for others
+            val pillView = view.findViewById<TextView>(R.id.txtOverlayStatusPill)
+            pillView.text = pillText
+            if (!prefs.isGamePauseEnabled && !prefs.isDailyCapReached()) {
+                // Truly empty wallet — red pill (default from XML)
+                pillView.setTextColor(ContextCompat.getColor(applicationContext, R.color.kyzen_red_medium))
+                pillView.background = ContextCompat.getDrawable(applicationContext, R.drawable.bg_intervention_pill)
+            } else {
+                // Parent pause or daily cap — amber pill
+                pillView.setTextColor(ContextCompat.getColor(applicationContext, R.color.kyzen_amber_dark))
+                pillView.background = ContextCompat.getDrawable(applicationContext, R.drawable.bg_cancel_pill)
             }
-            startActivity(intent)
+
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply { gravity = Gravity.TOP or Gravity.START }
+
+            overlayView = view
+            windowManager.addView(view, params)
+
+            // ── Quote rotation — starts after 2s, rotates every 5s ────────────
+            val txtQuote       = view.findViewById<TextView>(R.id.txtOverlayQuote)
+            val txtQuoteAuthor = view.findViewById<TextView>(R.id.txtOverlayQuoteAuthor)
+            val shuffledQuotes = OVERLAY_QUOTES.shuffled()
+            overlayQuoteIndex  = 0
+
+            val quoteHandler = Handler(Looper.getMainLooper())
+            overlayQuoteHandler = quoteHandler
+
+            fun showQuote(index: Int, immediate: Boolean = false) {
+                val q = shuffledQuotes[index % shuffledQuotes.size]
+                if (immediate) {
+                    // No blank gap — set text and fade in straight away
+                    txtQuote.text       = q.first
+                    txtQuoteAuthor.text = q.second
+                    ObjectAnimator.ofFloat(txtQuote, "alpha", 0f, 1f).apply {
+                        duration = 500; start()
+                    }
+                    ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 0f, 1f).apply {
+                        duration = 500; start()
+                    }
+                } else {
+                    // Subsequent quotes: fade out → swap → fade in
+                    ObjectAnimator.ofFloat(txtQuote, "alpha", 1f, 0f).apply {
+                        duration = 300; start()
+                    }
+                    ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 1f, 0f).apply {
+                        duration = 300; start()
+                    }
+                    quoteHandler.postDelayed({
+                        txtQuote.text       = q.first
+                        txtQuoteAuthor.text = q.second
+                        ObjectAnimator.ofFloat(txtQuote, "alpha", 0f, 1f).apply {
+                            duration = 500; start()
+                        }
+                        ObjectAnimator.ofFloat(txtQuoteAuthor, "alpha", 0f, 1f).apply {
+                            duration = 500; start()
+                        }
+                    }, 300)
+                }
+            }
+
+            // Show first quote immediately — no blank gap
+            showQuote(overlayQuoteIndex++, immediate = true)
+
+            val quoteTicker = object : Runnable {
+                override fun run() {
+                    if (overlayView == null) return
+                    showQuote(overlayQuoteIndex++)
+                    quoteHandler.postDelayed(this, 6_000L)
+                }
+            }
+            // Subsequent quotes rotate every 6 seconds
+            quoteHandler.postDelayed(quoteTicker, 6_000L)
+
+            val btnGoBack = view.findViewById<Button>(R.id.btnGoBackToApp)
+            val btnHome   = view.findViewById<Button>(R.id.btnReturnHome)
+
+            // ── Go home action ────────────────────────────────────────────────
+            val goHome = {
+                // Critical: Record exactly when we sent the user home to invalidate ghost apps
+                lastSentHomeTimeMs = System.currentTimeMillis()
+                
+                // Ensure media is paused one last time before leaving
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
+                
+                removeOverlay()
+                startActivity(Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+                
+                // Prevent infinite loop with floating windows (PiP).
+                // Give the user a 5-second escape hatch on the home screen to physically 
+                // close the floating window or swipe it away in Recents without the overlay blocking them.
+                inGracePeriod = true
+                gracePeriodPackage = packageName
+                gracePeriodHandler?.removeCallbacksAndMessages(null)
+                
+                val gpHandler = Handler(Looper.getMainLooper())
+                gracePeriodHandler = gpHandler
+                gpHandler.postDelayed({
+                    inGracePeriod = false
+                    gracePeriodPackage = ""
+                    gracePeriodHandler = null
+                    // After 5 seconds, if the PiP window is still open, the Neutral
+                    // background audio defender will automatically kick in and mute it.
+                }, 5_000L)
+            }
+
+            // ── Single button mode — grace already used for this package ────────
+            // Grace is per-package per-day. After the child uses their 15 seconds
+            // once, the package is in graceUsedPackages and no further grace is given.
+            // This applies to BOTH wallet-empty AND parent-pause scenarios equally.
+            if (packageName in graceUsedPackages) {
+                btnGoBack.visibility = View.GONE
+                btnHome.setOnClickListener { goHome() }
+                return
+            }
+
+            // ── Two button mode — first time for this package ─────────────────
+            btnHome.setOnClickListener { goHome() }
+
+            btnGoBack.setOnClickListener {
+                // CRITICAL ORDER:
+                // 1. Set inGracePeriod = true FIRST — the monitoring loop (IO thread)
+                //    checks this every 2s. Setting it before removeOverlay() ensures
+                //    that even if the next poll fires before this Handler completes,
+                //    it will see inGracePeriod=true and skip the intervention.
+                // 2. Set overlayView = null via removeOverlay() SECOND — once the
+                //    overlay is removed the guard at the top of fireCoachingIntervention
+                //    won't block re-entry, but inGracePeriod=true will.
+                inGracePeriod      = true
+                gracePeriodPackage = packageName
+                // Remove the overlay AFTER setting grace flags
+                removeOverlay()
+
+                // Return child to their app explicitly so they aren't left on home screen.
+                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
+                                         Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    startActivity(launchIntent)
+                }
+
+                // 15s silent grace period — child wraps up, then hard overlay fires.
+                // graceUsedPackages.add() happens HERE (after 15s) so the polling
+                // loop sees inGracePeriod=true and skips intervention for the full
+                // 15 seconds before the second overlay appears.
+                val gpHandler = Handler(Looper.getMainLooper())
+                gracePeriodHandler = gpHandler
+                gpHandler.postDelayed({
+                    inGracePeriod      = false
+                    gracePeriodPackage = ""
+                    gracePeriodHandler = null
+                    // Mark grace as used NOW — any subsequent overlay will be single-button
+                    graceUsedPackages.add(packageName)
+                    if (overlayView != null) return@postDelayed
+                    // Check on IO thread to avoid blocking Main
+                    serviceScope.launch {
+                        val currentPkg = getCurrentForegroundPackage()
+                        if (currentPkg == packageName && rewardEngine.shouldIntervene()) {
+                            withContext(Dispatchers.Main) {
+                                // Single button mode — grace now marked above
+                                fireCoachingIntervention(packageName, appName)
+                            }
+                        }
+                    }
+                }, 15_000L)
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    // ─── Callbacks from OverlayActivity ─────────────────────────────────────────
-
     /**
-     * Called by OverlayActivity when the child taps "I'm Ready — Take a Break".
-     * Pauses media, sends child home, starts 5s grace for PiP windows.
-     */
-    fun onOverlayGoHome(packageName: String) {
-        // Record exactly when we sent the user home to invalidate ghost apps
-        lastSentHomeTimeMs = System.currentTimeMillis()
-
-        // Ensure media is paused one last time before leaving
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
-        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
-
-        // Send child to home screen
-        startActivity(Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_HOME)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        })
-
-        // Prevent infinite loop with floating windows (PiP).
-        // Give the user a 5-second escape hatch on the home screen to physically
-        // close the floating window or swipe it away in Recents.
-        inGracePeriod = true
-        gracePeriodPackage = packageName
-        gracePeriodHandler?.removeCallbacksAndMessages(null)
-
-        val gpHandler = Handler(Looper.getMainLooper())
-        gracePeriodHandler = gpHandler
-        gpHandler.postDelayed({
-            inGracePeriod = false
-            gracePeriodPackage = ""
-            gracePeriodHandler = null
-            // After 5 seconds, if the PiP window is still open, the Neutral
-            // background audio defender will automatically kick in and mute it.
-        }, 5_000L)
-    }
-
-    /**
-     * Called by OverlayActivity when the child taps "Give me 15 seconds to wrap up".
-     * Sets grace period, returns child to their app, starts 15s timer.
-     */
-    fun onOverlayGraceRequested(packageName: String, appName: String) {
-        // CRITICAL ORDER:
-        // 1. Set inGracePeriod = true FIRST — the monitoring loop (IO thread)
-        //    checks this every 2s. Setting it before the overlay disappears ensures
-        //    that even if the next poll fires before this completes, it will see
-        //    inGracePeriod=true and skip the intervention.
-        inGracePeriod      = true
-        gracePeriodPackage = packageName
-
-        // Return child to their app explicitly so they aren't left on home screen.
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-        if (launchIntent != null) {
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
-                                 Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            startActivity(launchIntent)
-        }
-
-        // 15s silent grace period — child wraps up, then hard overlay fires.
-        val gpHandler = Handler(Looper.getMainLooper())
-        gracePeriodHandler = gpHandler
-        gpHandler.postDelayed({
-            inGracePeriod      = false
-            gracePeriodPackage = ""
-            gracePeriodHandler = null
-            // Mark grace as used NOW — any subsequent overlay will be single-button
-            graceUsedPackages.add(packageName)
-            if (OverlayActivity.currentInstance != null) return@postDelayed
-            // Check on IO thread to avoid blocking Main
-            serviceScope.launch {
-                val currentPkg = getCurrentForegroundPackage()
-                if (currentPkg == packageName && rewardEngine.shouldIntervene()) {
-                    withContext(Dispatchers.Main) {
-                        // Single button mode — grace now marked above
-                        fireCoachingIntervention(packageName, appName)
-                    }
-                }
-            }
-        }, 15_000L)
-    }
-
-        /**
      * Fires a push notification warning when gems are running low (≤ LOW_GEM_THRESHOLD).
      * Gives the child advance notice so they can wrap up naturally before the overlay fires.
      */
@@ -757,8 +908,139 @@ class UsageMonitorService : Service() {
             try { windowManager.removeView(it) } catch (e: Exception) { e.printStackTrace() }
             overlayView = null
         }
-        // Also dismiss OverlayActivity if it's showing
-        OverlayActivity.currentInstance?.finish()
+    }
+
+    // ─── Phase 3: YouTube Launch Intercept Overlay ────────────────────────────
+
+    /**
+     * Shows the "Watch for Fun" / "Watch for Learning" choice overlay when the
+     * child opens the official YouTube app.
+     *
+     * Wallet Pre-Check (Patch 5): if rewardEngine.shouldIntervene() is true
+     * (wallet empty or daily cap reached), the "Watch for Fun" button is
+     * greyed out and disabled with a "0 Gems Remaining" pill. The "Watch for
+     * Learning" button remains fully accessible — the child can always study.
+     *
+     * Touch-shield: the overlay uses FLAG_NOT_TOUCH_MODAL + clickable=true to
+     * block underlying YouTube app touches while the choice is pending.
+     */
+    private fun showYouTubeInterceptOverlay() {
+        // Guard: already showing — don't stack
+        if (interceptOverlayView != null) return
+
+        // Pause any media playing in the background (e.g., YouTube video that
+        // auto-played when the app opened). This prevents the child from watching
+        // content while the choice overlay is on screen.
+        try {
+            val pauseIntent = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+                putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
+            }
+            applicationContext.sendBroadcast(pauseIntent)
+            val pauseIntent2 = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+                putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
+            }
+            applicationContext.sendBroadcast(pauseIntent2)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            val inflater = LayoutInflater.from(this@UsageMonitorService)
+            val view = inflater.inflate(R.layout.layout_youtube_intercept, null)
+
+            val btnWatchForLearning = view.findViewById<Button>(R.id.btnWatchForLearning)
+            val btnWatchForFun = view.findViewById<Button>(R.id.btnWatchForFun)
+            val txtWalletPill = view.findViewById<TextView>(R.id.txtInterceptWalletPill)
+
+            // ── Wallet Pre-Check (Patch 5) ──────────────────────────────────
+            // If the child has 0 gems or has hit the daily cap, disable "Watch for Fun"
+            // and show the warning pill. "Watch for Learning" stays enabled.
+            val walletBlocked = rewardEngine.shouldIntervene()
+            if (walletBlocked) {
+                btnWatchForFun.isEnabled = false
+                btnWatchForFun.alpha = 0.4f
+                btnWatchForFun.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(applicationContext, R.color.kyzen_grey_light)
+                )
+                txtWalletPill.visibility = View.VISIBLE
+                val pillText = when {
+                    prefs.isGamePauseEnabled -> "Entertainment paused by parent"
+                    prefs.isDailyCapReached() -> "Daily gem allowance reached"
+                    else -> "0 Gems Remaining — Study to Earn Gems"
+                }
+                txtWalletPill.text = pillText
+            }
+
+            // ── Path B: "Watch for Learning" → launch FlowPlayerActivity ──────
+            btnWatchForLearning.setOnClickListener {
+                // Patch 1: Set the intercept flag BEFORE removing the overlay.
+                // The monitor loop checks this at the very top (before the audio-mute
+                // defender) and skips the entire cycle until Flow reaches onResume.
+                interceptInProgress = true
+
+                // Patch 1b: 5-second safety timeout — if FlowPlayerActivity fails to
+                // reach onResume (crash, ANR, slow launch), auto-clear the flag so
+                // the monitor doesn't get stuck skipping all tracking forever.
+                interceptTimeoutHandler?.removeCallbacksAndMessages(null)
+                val timeoutHandler = Handler(Looper.getMainLooper())
+                interceptTimeoutHandler = timeoutHandler
+                timeoutHandler.postDelayed({
+                    if (interceptInProgress) {
+                        interceptInProgress = false
+                        interceptTimeoutHandler = null
+                    }
+                }, INTERCEPT_TIMEOUT_MS)
+
+                removeInterceptOverlay()
+
+                // Launch the embedded Flow player via explicit Intent.
+                // FlowPlayerActivity.onResume() will set FlowPlaybackState.isPlayerActive
+                // to true, which the monitor detects on its next poll and clears the flag.
+                val intent = Intent(applicationContext, FlowPlayerActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                startActivity(intent)
+            }
+
+            // ── Path A: "Watch for Fun" → dismiss, let YouTube track normally ─
+            btnWatchForFun.setOnClickListener {
+                // Only active if wallet has gems (Patch 5 guard above)
+                if (!walletBlocked) {
+                    // Remember the choice so the overlay doesn't re-show every 2s poll.
+                    // The flag resets when YouTube leaves the foreground.
+                    youTubeFunChoiceMade = true
+                    removeInterceptOverlay()
+                    // No flag needed — YouTube stays foreground and the monitor's
+                    // existing entertainment tracking deducts gems per minute.
+                }
+            }
+
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply { gravity = Gravity.TOP or Gravity.START }
+
+            interceptOverlayView = view
+            windowManager.addView(view, params)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Removes the YouTube intercept overlay from the WindowManager.
+     * Called when the child makes a choice or when the service is destroyed.
+     */
+    private fun removeInterceptOverlay() {
+        interceptOverlayView?.let {
+            try { windowManager.removeView(it) } catch (e: Exception) { e.printStackTrace() }
+            interceptOverlayView = null
+        }
     }
 
     // ─── Detox Enforcement Overlay ────────────────────────────────────────────
@@ -965,6 +1247,47 @@ class UsageMonitorService : Service() {
 
     // ─── Real-Time Foreground Detection ──────────────────────────────────────
 
+    /**
+     * Phase 5: The Centralized Packaging Translator (4-Site Self-Exclusion Fix)
+     *
+     * Translates the raw foreground package name into a "trackable" package string.
+     * When our own package (Kyzen) is in the foreground, this helper inspects
+     * FlowPlaybackState to determine whether the Flow player is active and what
+     * category the current video is classified as.
+     *
+     * Return contract:
+     *   - null                          → self-exclude (dashboard/settings, or empty)
+     *   - "flow_productive"             → Flow playing an educational video
+     *   - "flow_entertainment"          → Flow playing a non-educational video
+     *   - the raw package name          → external app (YouTube, Netflix, etc.)
+     *
+     * All four self-exclusion sites call this helper instead of raw
+     * `applicationContext.packageName` comparisons, resolving the tracking
+     * inversion at all four locations simultaneously.
+     *
+     * Thread safety: FlowPlaybackState fields are @Volatile. The monitor reads
+     * them on Dispatchers.IO; FlowPlayerActivity writes them on Main/player thread.
+     */
+    private fun effectiveTrackablePackage(foregroundPackage: String): String? {
+        if (foregroundPackage.isEmpty()) return null
+
+        if (foregroundPackage == applicationContext.packageName) {
+            return if (FlowPlaybackState.isPlayerActive) {
+                // Flow player is foreground — map to synthetic package based on category.
+                // During the 15s neutral grace (currentCategory == null), default to
+                // entertainment (safe default per Phase 1 §1.3 — prevents channel-surfing exploit).
+                // If the user manually paused playback, self-exclude to prevent gem earning
+                // while paused (paused-video exploit defense).
+                if (FlowPlaybackState.isPaused) null
+                else if (FlowPlaybackState.currentCategory == "PRODUCTIVE") "flow_productive"
+                else "flow_entertainment"
+            } else {
+                null // Standard dashboard active → self-exclude normally
+            }
+        }
+        return foregroundPackage // External application → process normally
+    }
+
     private fun getCurrentForegroundPackage(): String {
         val usm       = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val endTime   = System.currentTimeMillis()
@@ -1012,8 +1335,20 @@ class UsageMonitorService : Service() {
         // If an app is PAUSED (e.g. notification, PiP) OR if it is a "Ghost" app 
         // (resumed BEFORE we explicitly sent the user Home), we must check its audio.
         // If it's an Entertainment app and NOT playing audio, it is harmless. Ignore it.
-        if (lastResumedPackage.isNotEmpty() && lastResumedPackage != applicationContext.packageName) {
-            val classification = AppClassifier.classify(lastResumedPackage, getAppName(lastResumedPackage))
+        //
+        // Phase 5: Use the packaging translator so Flow's synthetic keys are classified
+        // correctly. When Flow is paused (isPlayerActive == false), the helper returns
+        // null → the defender skips Flow (correct — Flow's accounting is driven by
+        // isPlayerActive, not by the ghost/paused audio check).
+        val defenderPkg = effectiveTrackablePackage(lastResumedPackage)
+        if (defenderPkg != null) {
+            val classification = if (defenderPkg == "flow_productive") {
+                AppClassifier.ClassificationResult(AppClassifier.AppCategory.PRODUCTIVE, 100)
+            } else if (defenderPkg == "flow_entertainment") {
+                AppClassifier.ClassificationResult(AppClassifier.AppCategory.ENTERTAINMENT, 100)
+            } else {
+                AppClassifier.classify(defenderPkg, getAppName(defenderPkg))
+            }
             
             val isVisiblyPaused = (latestState == UsageEvents.Event.ACTIVITY_PAUSED)
             val isGhostFromBeforeHome = (lastResumedTime <= lastSentHomeTimeMs)
@@ -1034,20 +1369,35 @@ class UsageMonitorService : Service() {
 
         // ── Active Window Priority Strategy (PiP Defender) ──
         // If any OTHER paused Entertainment app is actively playing music, prioritize it.
+        //
+        // Phase 5: Use the packaging translator so Flow-in-PiP is considered. When
+        // Flow is in PiP with isPlayerActive == true and currentCategory == ENTERTAINMENT,
+        // the helper returns "flow_entertainment" → classified as ENTERTAINMENT →
+        // prioritized if audio is active.
         for ((pkg, state) in packageLatestState) {
             if (pkg != lastResumedPackage && state == UsageEvents.Event.ACTIVITY_PAUSED) {
-                if (pkg != applicationContext.packageName) {
-                    val classification = AppClassifier.classify(pkg, getAppName(pkg))
+                val pipPkg = effectiveTrackablePackage(pkg)
+                if (pipPkg != null) {
+                    val classification = if (pipPkg == "flow_productive") {
+                        AppClassifier.ClassificationResult(AppClassifier.AppCategory.PRODUCTIVE, 100)
+                    } else if (pipPkg == "flow_entertainment") {
+                        AppClassifier.ClassificationResult(AppClassifier.AppCategory.ENTERTAINMENT, 100)
+                    } else {
+                        AppClassifier.classify(pipPkg, getAppName(pipPkg))
+                    }
                     if (classification.category == AppClassifier.AppCategory.ENTERTAINMENT) {
                         if (audioManager.isMusicActive) {
-                            return pkg // Force prioritize the active PiP window
+                            return pipPkg // Force prioritize the active PiP window
                         }
                     }
                 }
             }
         }
 
-        return lastResumedPackage
+        // Phase 5: If the last resumed package is our own (Flow active), return the
+        // synthetic key so the main loop's economy block processes it correctly.
+        val finalPkg = effectiveTrackablePackage(lastResumedPackage)
+        return finalPkg ?: lastResumedPackage
     }
 
     // ─── Daily Reset ──────────────────────────────────────────────────────────
@@ -1065,10 +1415,16 @@ class UsageMonitorService : Service() {
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private fun getAppName(packageName: String): String {
-        return try {
-            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            packageManager.getApplicationLabel(appInfo).toString()
-        } catch (e: Exception) { packageName }
+        // Phase 5: Return human-readable labels for Flow's synthetic keys
+        // (packageManager has no entry for these — they're virtual packages).
+        return when (packageName) {
+            "flow_productive" -> "Learn with Kyzen"
+            "flow_entertainment" -> "YouTube for Entertainment"
+            else -> try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) { packageName }
+        }
     }
 
     // ─── Notification Infrastructure ─────────────────────────────────────────

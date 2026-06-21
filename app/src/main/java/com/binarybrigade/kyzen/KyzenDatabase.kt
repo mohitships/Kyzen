@@ -17,6 +17,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * v1 — Phase 3: Initial schema — app_usage table (AppUsageEntity)
  * v2 — Session 7: Added gem_transactions table (GemTransactionEntity)
  *      Migration: purely additive — creates new table, preserves all app_usage data.
+ *
+ * NOTE: The video_classification cache table was moved to FlowDatabase in the
+ * :feature-youtube-flow module (Phase 4 refactor) to avoid a circular dependency
+ * between :app and :feature-youtube-flow. KyzenDatabase stays at v2.
  */
 @Database(
     entities = [AppUsageEntity::class, GemTransactionEntity::class],

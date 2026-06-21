@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    YouTube Launch Intercept Overlay — layout_youtube_intercept.xml
+    Phase 3: Displayed when the child opens the official YouTube app.
+    Asks: "Watch for Fun" (entertainment, deducts gems) or "Watch for Learning" (Flow player).
+
+    Design principles (matching Kyzen overlay system):
+    — Card-based design (bg_dialog_card, 28dp radius) — same as activity_overlay.xml
+    — Soft green background (kyzen_green_bg_light) — calm, non-punitive
+    — SDT-aligned: offers concrete choices, acknowledges autonomy
+    — One screen, one question, two clear actions. No clutter.
+    — Wallet Pre-Check (Patch 5): "Watch for Fun" greys out when wallet empty/capped.
+
+    Touch-shield: clickable=true + focusable=true to block underlying app touches.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/kyzen_green_bg_light"
+    android:fitsSystemWindows="true"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="40dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- White card — matches dialog system (28dp radius) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_dialog_card"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="28dp">
+
+        <!-- Icon — YouTube play, calm and neutral -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▶"
+            android:textSize="40sp"
+            android:textColor="@color/kyzen_red_medium"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:includeFontPadding="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You opened YouTube"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_green_dark"
+            android:gravity="center"
+            android:letterSpacing="0.01"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Subtitle — the choice prompt -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="What are you in the mood for?"
+            android:textSize="14sp"
+            android:textColor="@color/kyzen_grey_medium"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Watch for Learning — always enabled, green (primary action) -->
+        <Button
+            android:id="@+id/btnWatchForLearning"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Watch for Learning"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_rounded"
+            android:backgroundTint="@color/kyzen_green_medium"
+            android:stateListAnimator="@null"
+            android:letterSpacing="0.02"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Watch for Fun — entertainment path, amber/orange.
+             Disabled (greyed) when wallet empty or daily cap reached (Patch 5).
+             The subtitle pill below shows the reason. -->
+        <Button
+            android:id="@+id/btnWatchForFun"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Watch for Fun"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:textColor="@color/kyzen_white"
+            android:background="@drawable/bg_btn_rounded"
+            android:backgroundTint="@color/kyzen_amber_dark"
+            android:stateListAnimator="@null"
+            android:letterSpacing="0.02"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <!-- Wallet status pill — shown only when Watch for Fun is disabled.
+             Hidden by default; set visible + text by UsageMonitorService. -->
+        <TextView
+            android:id="@+id/txtInterceptWalletPill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 Gems Remaining — Study to Earn Gems"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/kyzen_red_medium"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:background="@drawable/bg_intervention_pill"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="14dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>

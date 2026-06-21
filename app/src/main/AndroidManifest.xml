@@ -95,21 +95,6 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
-        <!-- YouTube Content Detection — Accessibility Service for classifying YouTube
-             content as educational (PRODUCTIVE) or entertainment. Must be enabled by
-             the user in Android Accessibility Settings. -->
-        <service
-            android:name="com.binarybrigade.kyzen.YouTubeContentMonitor"
-            android:exported="false"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
-
         <!-- Phase 3: Boot + Screen-On auto-restart receiver -->
         <!-- exported="true" is REQUIRED for BOOT_COMPLETED — sent by the OS (external to our app) -->
         <receiver

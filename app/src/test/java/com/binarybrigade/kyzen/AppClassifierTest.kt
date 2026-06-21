@@ -5,10 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * AppClassifierTest — Unit Tests for the Four-Layer Classification Pipeline
+ * AppClassifierTest — Unit Tests for the Three-Layer AI Classification Pipeline
  *
- * Tests validate all four layers:
- * Layer 0: Context-Aware Classification (YouTube via YouTubeContentState)
+ * Tests validate all three layers:
  * Layer 1: Expert Knowledge Base (exact package lookup)
  * Layer 2: Weighted keyword scoring
  * Layer 3: Neutral fallback
@@ -16,47 +15,6 @@ import org.junit.Test
  * Three categories: PRODUCTIVE (earns credits), ENTERTAINMENT (spends credits), NEUTRAL (no effect)
  */
 class AppClassifierTest {
-
-    // ─── LAYER 0: Context-Aware YouTube Classification Tests ──────────────────
-
-    @Test
-    fun `TC-00a YouTube classified as NEUTRAL when accessibility service is off or stale`() {
-        // Default state: YouTubeContentState has never been updated → isStale() returns true
-        // → YouTube defaults to NEUTRAL (safest: no unfair deduction, no unearned reward)
-        YouTubeContentState.reset()
-        val result = AppClassifier.classify("com.google.android.youtube", "YouTube")
-        assertEquals(AppClassifier.AppCategory.NEUTRAL, result.category)
-        assertEquals(0, result.confidence)
-    }
-
-    @Test
-    fun `TC-00b YouTube classified as PRODUCTIVE when watching educational content`() {
-        YouTubeContentState.reset()
-        YouTubeContentState.update(AppClassifier.AppCategory.PRODUCTIVE)
-        val result = AppClassifier.classify("com.google.android.youtube", "YouTube")
-        assertEquals(AppClassifier.AppCategory.PRODUCTIVE, result.category)
-        assertEquals(90, result.confidence)
-    }
-
-    @Test
-    fun `TC-00c YouTube classified as ENTERTAINMENT when watching non-educational content`() {
-        YouTubeContentState.reset()
-        YouTubeContentState.update(AppClassifier.AppCategory.ENTERTAINMENT)
-        val result = AppClassifier.classify("com.google.android.youtube", "YouTube")
-        assertEquals(AppClassifier.AppCategory.ENTERTAINMENT, result.category)
-        assertEquals(90, result.confidence)
-    }
-
-    @Test
-    fun `TC-00d YouTube reverts to NEUTRAL when state becomes stale`() {
-        YouTubeContentState.reset()
-        YouTubeContentState.update(AppClassifier.AppCategory.PRODUCTIVE)
-        // Manually expire the state by setting timestamp to 31 seconds ago
-        YouTubeContentState._lastUpdatedMs = System.currentTimeMillis() - 31_000L
-        val result = AppClassifier.classify("com.google.android.youtube", "YouTube")
-        assertEquals(AppClassifier.AppCategory.NEUTRAL, result.category)
-        assertEquals(0, result.confidence)
-    }
 
     // ─── LAYER 1: Knowledge Base Tests ───────────────────────────────────────
 
@@ -68,9 +26,8 @@ class AppClassifierTest {
     }
 
     @Test
-    fun `TC-02 YouTube Music classified as ENTERTAINMENT via Layer 1`() {
-        // YouTube (main app) is handled by Layer 0, but YouTube Music is always ENTERTAINMENT
-        val result = AppClassifier.classify("com.google.android.apps.youtube.music", "YouTube Music")
+    fun `TC-02 YouTube classified as ENTERTAINMENT via Layer 1`() {
+        val result = AppClassifier.classify("com.google.android.youtube", "YouTube")
         assertEquals(AppClassifier.AppCategory.ENTERTAINMENT, result.category)
         assertEquals(99, result.confidence)
     }
@@ -104,10 +61,10 @@ class AppClassifierTest {
     }
 
     @Test
-    fun `TC-07 WhatsApp classified as NEUTRAL via Layer 1`() {
-        // WhatsApp is a basic communication utility — not productive work, not entertainment
+    fun `TC-07 WhatsApp classified as PRODUCTIVE via Layer 1`() {
+        // WhatsApp is communicative use (Orben et al. 2022) — not passive entertainment
         val result = AppClassifier.classify("com.whatsapp", "WhatsApp")
-        assertEquals(AppClassifier.AppCategory.NEUTRAL, result.category)
+        assertEquals(AppClassifier.AppCategory.PRODUCTIVE, result.category)
         assertEquals(99, result.confidence)
     }
 

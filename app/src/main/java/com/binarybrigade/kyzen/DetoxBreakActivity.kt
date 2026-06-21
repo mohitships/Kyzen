@@ -44,11 +44,6 @@ class DetoxBreakActivity : AppCompatActivity() {
         /** Duration in milliseconds passed from ChildDashboardActivity */
         const val EXTRA_DETOX_DURATION_MS = "extra_detox_duration_ms"
 
-        /** Current instance — used by UsageMonitorService to check if activity is showing
-         *  and to finish it when detox is cancelled/completed externally. */
-        var currentInstance: DetoxBreakActivity? = null
-            private set
-
         /**
          * Rotating motivational quotes shown below the timer (one per minute).
          *
@@ -106,9 +101,6 @@ class DetoxBreakActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detox_break)
-
-        // Register as current instance so service can check/finish us
-        currentInstance = this
 
         // Ensure this activity consumes all touches.
         window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
@@ -195,10 +187,6 @@ class DetoxBreakActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(tickRunnable)
-        // Clear instance reference
-        if (currentInstance == this) {
-            currentInstance = null
-        }
     }
 
     // ─── View Binding ─────────────────────────────────────────────────────────

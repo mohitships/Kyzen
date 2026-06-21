@@ -132,16 +132,7 @@ object AppClassifier {
         "in.mohalla.video"                          to AppCategory.ENTERTAINMENT, // Moj
 
         // ── ENTERTAINMENT: Video & Streaming ─────────────────────────────────
-        // NOTE: YouTube is NOT in the knowledge base. It is handled by Layer 0
-        // (context-aware classification via YouTubeContentState) because YouTube
-        // can be either PRODUCTIVE (educational channels) or ENTERTAINMENT (gaming,
-        // vlogs, etc.). When the Accessibility Service is not enabled, YouTube
-        // defaults to NEUTRAL — the safest option (no unfair deduction, no unearned reward).
-        //
-        // NOTE: YouTube Kids is also handled by Layer 0 (same mechanism as YouTube).
-        // When accessibility is on, it reads YouTubeContentState for content-aware
-        // classification. When off, it defaults to PRODUCTIVE — YouTube Kids is
-        // specifically designed for children and contains mostly educational content.
+        "com.google.android.youtube"                to AppCategory.ENTERTAINMENT, // YouTube
         "com.google.android.apps.youtube.music"     to AppCategory.ENTERTAINMENT, // YouTube Music
         "com.netflix.mediaclient"                   to AppCategory.ENTERTAINMENT, // Netflix
         "com.amazon.avod.thirdpartyclient"          to AppCategory.ENTERTAINMENT, // Prime Video
@@ -291,42 +282,6 @@ object AppClassifier {
      * Layer 3: Fallback → NEUTRAL, 0% confidence (safest default, no credit impact).
      */
     fun classify(packageName: String, appName: String): ClassificationResult {
-
-        // ── LAYER 0: Context-Aware Classification for Dual-Nature Apps ────────
-        // YouTube can be PRODUCTIVE (educational channels) or ENTERTAINMENT (gaming,
-        // vlogs, etc.). The AccessibilityService (YouTubeContentMonitor) watches
-        // YouTube's UI in real-time and updates YouTubeContentState accordingly.
-        //
-        // Three states:
-        //   - Accessibility ON + educational content → PRODUCTIVE (90% confidence)
-        //   - Accessibility ON + non-educational    → ENTERTAINMENT (90% confidence)
-        //   - Accessibility OFF or stale (>30s)     → NEUTRAL (safest default)
-        //
-        // NEUTRAL is chosen over ENTERTAINMENT as the fallback because:
-        //   1. No unfair gem deduction when we can't verify content type
-        //   2. No unearned gem reward when we can't verify content type
-        //   3. Incentivises enabling the Accessibility Service (without it, YouTube
-        //      is "free" but earns no gems — the child wants to earn gems)
-        if (packageName.lowercase().trim() == "com.google.android.youtube") {
-            return if (YouTubeContentState.isStale()) {
-                ClassificationResult(AppCategory.NEUTRAL, 0)
-            } else {
-                ClassificationResult(YouTubeContentState.contentCategory, 90)
-            }
-        }
-
-        // YouTube Kids — same Layer 0 mechanism as YouTube.
-        // When accessibility is on, reads YouTubeContentState for content-aware
-        // classification. When off or stale, defaults to PRODUCTIVE because
-        // YouTube Kids is specifically designed for children and contains
-        // mostly educational content.
-        if (packageName.lowercase().trim() == "com.google.android.apps.youtube.kids") {
-            return if (YouTubeContentState.isStale()) {
-                ClassificationResult(AppCategory.PRODUCTIVE, 80)
-            } else {
-                ClassificationResult(YouTubeContentState.contentCategory, 90)
-            }
-        }
 
         // ── LAYER 1: Expert Knowledge Base ───────────────────────────────────
         val knownCategory = knowledgeBase[packageName.lowercase().trim()]

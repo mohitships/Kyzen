@@ -147,6 +147,38 @@ class UsageTracker(private val context: Context) {
             }
         }
 
+        // ── Flow (YouTube-in-Kyzen) Synthetic Entries ────────────────────────────
+        // The YouTube Flow runs inside com.binarybrigade.kyzen (same package), so
+        // UsageStatsManager never sees it as a separate app. We inject synthetic
+        // entries from the poll-confirmed accumulator (KyzenPreferences), which
+        // UsageMonitorService writes every 2 seconds when Flow is in foreground.
+        val flowPrefs = KyzenPreferences(context)
+        val flowProductiveMs = flowPrefs.getConfirmedProductiveMsForPackage("flow_productive")
+        val flowEntertainmentMs = flowPrefs.getConfirmedEntertainmentMsForPackage("flow_entertainment")
+
+        if (flowProductiveMs >= 30_000L) {
+            sanitizedList.add(
+                AppUsageItem(
+                    packageName = "flow_productive",
+                    appName = "Learn with Kyzen",
+                    usageDurationMillis = flowProductiveMs,
+                    category = AppClassifier.AppCategory.PRODUCTIVE,
+                    confidence = 100
+                )
+            )
+        }
+        if (flowEntertainmentMs >= 30_000L) {
+            sanitizedList.add(
+                AppUsageItem(
+                    packageName = "flow_entertainment",
+                    appName = "YouTube for Entertainment",
+                    usageDurationMillis = flowEntertainmentMs,
+                    category = AppClassifier.AppCategory.ENTERTAINMENT,
+                    confidence = 100
+                )
+            )
+        }
+
         // Sort descending by total aggregated usage time
         val sortedList = sanitizedList.sortedByDescending { it.usageDurationMillis }
 

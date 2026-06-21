@@ -2,7 +2,6 @@ package com.binarybrigade.kyzen
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.provider.Settings
 
 /**
  * KyzenPreferences — Local Settings & State Storage (Gems Economy — Post Phase 3)
@@ -35,9 +34,7 @@ import android.provider.Settings
  */
 class KyzenPreferences(context: Context) {
 
-    private val appContext: Context = context.applicationContext
-
-    private val prefs: SharedPreferences = appContext.getSharedPreferences(
+    private val prefs: SharedPreferences = context.getSharedPreferences(
         "kyzen_prefs", Context.MODE_PRIVATE
     )
 
@@ -344,15 +341,11 @@ class KyzenPreferences(context: Context) {
     fun awardNewProductiveGems(packageName: String, gemsOwed: Int): Int {
         val alreadyAwarded = getGemsAwardedTodayForPackage(packageName)
         val newGems = (gemsOwed - alreadyAwarded).coerceAtLeast(0)
-        android.util.Log.d("KyzenPreferences",
-            "awardNewProductiveGems: pkg=$packageName gemsOwed=$gemsOwed alreadyAwarded=$alreadyAwarded newGems=$newGems")
         if (newGems <= 0) return 0
 
         // Respect daily earning cap — only award what the cap allows
         val remainingCap = (MAX_GEMS_EARNED_PER_DAY - gemsEarnedToday).coerceAtLeast(0)
         val toAward = minOf(newGems, remainingCap)
-        android.util.Log.d("KyzenPreferences",
-            "awardNewProductiveGems: remainingCap=$remainingCap toAward=$toAward gemsEarnedToday=$gemsEarnedToday")
         if (toAward <= 0) return 0
 
         // Update per-package counter + daily total + wallet atomically
@@ -523,25 +516,5 @@ class KyzenPreferences(context: Context) {
 
         editor.commit()
         // gemWallet intentionally NOT cleared — persistent carry-forward
-    }
-
-    // ─── Accessibility Service Status ──────────────────────────────────────────
-    // Used by DashboardFragment and ParentSettingsFragment to check if the
-    // YouTube Content Monitor accessibility service is enabled.
-
-    /**
-     * Checks if the YouTubeContentMonitor accessibility service is currently enabled.
-     * Uses the standard Android Settings.Secure API to query enabled accessibility services.
-     *
-     * @return true if the service is enabled, false otherwise
-     */
-    fun isYouTubeContentMonitorEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            appContext.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-
-        val serviceName = "${appContext.packageName}/${appContext.packageName}.YouTubeContentMonitor"
-        return enabledServices.contains(serviceName)
     }
 }

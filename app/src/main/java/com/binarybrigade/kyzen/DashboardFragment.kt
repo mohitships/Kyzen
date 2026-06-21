@@ -270,10 +270,6 @@ class DashboardFragment : Fragment() {
             txtGemsSpentToday.text = ""
             applyGemColour(status.gemsInWallet)
 
-            val spentToday = status.gemsSpentToday
-            val cap        = status.dailySpendingCap
-            val remaining  = status.gemsRemainingToday
-
             val pillFirstMessage = when {
                 productiveMins >= 30 -> "Incredible — ${productiveMins} mins of productive work!"
                 productiveMins >= 10 -> "Great work — ${productiveMins} mins of productive work today."
@@ -282,32 +278,21 @@ class DashboardFragment : Fragment() {
                 else -> "Do 2 mins of productive work to earn a gem."
             }
             startPillTicker(pillFirstMessage)
-            updateGemBar(spentToday, remaining, cap)
 
             txtChildProductiveTime.text    = "$productiveMins"
             txtChildEntertainmentTime.text = "$entertainmentMins"
 
-            val accessibilityHint = if (!prefs.isYouTubeContentMonitorEnabled()) {
-                "\n\n💡 Tip: Enable YouTube content detection in Settings to earn gems while watching educational videos."
-            } else ""
-
             txtEarnGemsStatus.text = when {
                 status.gemsInWallet == 0 && !prefs.isDetoxActive ->
-                    "Wallet empty. Use a productive app for 2 mins to earn 1 gem, or take a screen break to earn ${KyzenPreferences.DEFAULT_DETOX_BONUS}.$accessibilityHint"
+                    "Wallet empty. Use a productive app for 2 mins to earn 1 gem, or take a screen break to earn ${KyzenPreferences.DEFAULT_DETOX_BONUS}."
                 status.isDailyCapReached ->
                     "Daily allowance used. Your ${status.gemsInWallet} gems carry forward to tomorrow."
                 status.gemsInWallet < 10 ->
-                    "${status.gemsInWallet} gems remaining. Keep using productive apps to earn more.$accessibilityHint"
+                    "${status.gemsInWallet} gems remaining. Keep using productive apps to earn more."
                 else ->
                     "${status.gemsInWallet} gems in your wallet. Earned through focused work."
             }
         }
-    }
-
-    private fun updateGemBar(spent: Int, remaining: Int, cap: Int) {
-        // barGemsSpent and barGemsRemaining are inside a visibility=gone container —
-        // weight updates have no visual effect. Kept for future use if bar is re-enabled.
-        // No-op intentionally.
     }
 
     private fun handleDetoxBreakTap() {

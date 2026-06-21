@@ -7,3 +7,7 @@
 -keep class com.binarybrigade.kyzen.DetoxBreakActivity { *; }
 -keep class com.binarybrigade.kyzen.UsageMonitorService { *; }
 -keep class com.binarybrigade.kyzen.BootReceiver { *; }
+# FlowPlayerActivity — the embedded YouTube player entry point (Phase 2).
+# Pinned to primary dex to prevent START_CLASS_NOT_FOUND on Android 16
+# when launched via explicit Intent from the intercept overlay.
+-keep class io.github.aedev.flow.ui.player.FlowPlayerActivity { *; }
