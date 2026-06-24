@@ -1,6 +1,13 @@
 [versions]
 agp = "9.0.1"
-ksp = "2.1.0-1.0.29"
+# KSP aligned to AGP 9.0.1 bundled Kotlin 2.2.10 (Phase 0 probe, 2026-06-26).
+# Previous pin 2.1.0-1.0.29 targeted Kotlin 2.1.0 and was incompatible with the
+# bundled 2.2.10 toolchain. The 2.2.10-2.0.2 artifact is already in the Gradle cache.
+ksp = "2.2.10-2.0.2"
+# Compose compiler plugin is versioned by Kotlin version. AGP 9.0.1 bundles
+# Kotlin 2.2.10, so the Compose compiler must match exactly to avoid
+# "Compose Compiler version X is not compatible with Kotlin Y" build failures.
+composeCompiler = "2.2.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -8,12 +15,30 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 activity = "1.12.4"
+activityCompose = "1.12.4"
 constraintlayout = "2.2.1"
 room = "2.7.0"
 coroutines = "1.10.1"
 lifecycleRuntime = "2.9.0"
 mockito = "5.12.0"
 glide = "4.16.0"
+# Compose BOM keeps the Compose UI/Foundation/Material3 runtime artifacts aligned
+# without pinning each one individually.
+composeBom = "2025.06.00"
+# Media3/ExoPlayer — the video playback engine for the :feature-youtube-flow module.
+# Pinned to 1.5.1 (stable, compatible with Kotlin 2.2.10 and AGP 9.0.1).
+media3 = "1.5.1"
+# Ktor — HTTP client for the InnerTube metadata scraper (videoId → stream URLs).
+# Flow's innertube package uses Ktor with the OkHttp engine.
+ktor = "3.1.1"
+# kotlinx-serialization — JSON parsing for InnerTube API responses (PlayerResponse etc.)
+kotlinxSerialization = "1.7.3"
+# OkHttp — underlying HTTP engine for Ktor and direct stream fetching.
+okhttp = "4.12.0"
+# Coil — image loading for YouTube thumbnails in search results.
+coil = "2.7.0"
+# ONNX Runtime — on-device DeBERTa-v3-xsmall NLI for video classification.
+onnxruntimeAndroid = "1.26.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,10 +61,48 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 # Glide - Animated GIF rendering for the rotating gem on the child dashboard
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+# Compose - Phase 0 smoke test. activity-compose hosts a ComponentActivity with a
+# ComposeView content block; the BOM pins the runtime/ui/material3 trio.
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+# Media3/ExoPlayer — video playback engine for :feature-youtube-flow
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+androidx-media3-datasource = { group = "androidx.media3", name = "media3-datasource", version.ref = "media3" }
+androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
+# Ktor — HTTP client for InnerTube metadata scraping
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-encoding = { group = "io.ktor", name = "ktor-client-encoding", version.ref = "ktor" }
+# kotlinx-serialization — JSON for InnerTube API responses
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+# OkHttp — HTTP engine for Ktor + direct stream fetching
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+# Coil — image loading for YouTube thumbnails in search results
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+# ONNX Runtime Android — on-device ML inference engine
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntimeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+# android-library plugin — for the :feature-youtube-flow library module (Phase 2).
+# Same AGP version as the application plugin (9.0.1).
+android-library = { id = "com.android.library", version.ref = "agp" }
 # kotlin-android plugin intentionally omitted — AGP 9.0.1 bundles Kotlin internally.
 # Declaring it separately causes: IllegalArgumentException: Cannot add extension 'kotlin'
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+# Compose compiler plugin — versioned by Kotlin version, must match bundled 2.2.10.
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "composeCompiler" }
+# kotlinx-serialization plugin — for InnerTube JSON models in :feature-youtube-flow.
+# Versioned by Kotlin version (same as Compose compiler — both are Kotlin plugins).
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "composeCompiler" }
 

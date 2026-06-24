@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Kyzen"
 include(":app")
+include(":feature-youtube-flow")
