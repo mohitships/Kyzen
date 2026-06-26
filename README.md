@@ -20,6 +20,7 @@ Kyzen is built on a different set of core principles:
 * **Grace Enforcement:** To reduce the frustration of sudden app closures, Kyzen utilizes a staged intervention model. When the gem balance reaches zero, users receive a short grace period overlay, allowing them to save their work and mentally transition before the break is enforced.
 * **Detox Breaks:** The application includes a persistent timer for voluntary offline breaks, rewarding users only after the detox period is successfully completed.
 * **Smart Categorization:** The system evaluates installed packages and dynamically categorizes them into Productive, Entertainment, or Neutral tiers to ensure the economy reflects the true nature of the screen time.
+* **YouTube Content Classification:** Kyzen includes an in-app YouTube client (FlowPlayerActivity) that classifies videos as Productive or Entertainment using a combination of keyword matching and a DeBERTa-v3-xsmall zero-shot NLI model running on-device via ONNX Runtime. Videos are evaluated after keyword-based matching against a dataset of 736 educational channels, with the ONNX model serving as the fallback classifier.
 * **Privacy-First Design:** Kyzen operates as a localized application, ensuring all usage data remains on the device. It strictly avoids invasive tracking practices, such as inspecting message content or browsing history.
 
 ## Technical Architecture
@@ -31,6 +32,7 @@ The application is built natively for Android, prioritizing battery efficiency, 
 * **Design Pattern:** The system follows a localized, event-driven model that cleanly separates background tracking logic from the presentation layer.
 * **System Integration:** Operations are executed using standard OS interfaces. The architecture explicitly avoids elevated system privileges, such as Accessibility Services or Device Administrator policies, to minimize the application's privilege surface area and ensure compliance with modern OS constraints.
 * **Local Storage:** State and usage data are persisted securely and locally on the device utilizing Room SQLite.
+* **On-Device ML Inference:** The feature-youtube-flow module integrates an INT8-quantized DeBERTa-v3-xsmall model (86 MB) for zero-shot natural language inference, running entirely on-device via ONNX Runtime Android. A SentencePiece tokenizer with JSON-vocabulary trie encoding handles text preprocessing. Inference is guarded by a 500ms kill-switch; if the model times out, the system falls back to keyword-based classification.
 
 ## Getting Started
 
